@@ -509,7 +509,6 @@ Assumes work starts around 13:00 BST on 17 Oct and the submission deadline is no
 - Summary shows baseline versus TRIAGE for the same seed; the batch command prints the 30-seed result.
 - All tests pass, including model monotonicity and assignment-versus-brute-force.
 - README states what is synthetic, what is simulated, and credits OSM and every library.
-- Repo contains no secrets; the key in the original notes has been revoked.
 - Video is under 3 minutes, shows the LinuxONE instance and model, and the project title contains the team name.
 
 
