@@ -496,7 +496,7 @@ Assumes work starts around 13:00 BST on 17 Oct and the submission deadline is no
 5. Hospital state (beds, waits, specialties) is user-editable synthetic input, not live data.
 6. Category thresholds, rates, penalties and the 15-second replan cadence are tunable guesses, not clinical or operational truth.
 7. OpenRouter still lists a DeepSeek chat model and the endpoint `https://openrouter.ai/api/v1/chat/completions` is OpenAI-compatible; the exact model id must be checked.
-8. The Hack2Skill rules allow open-source libraries with links, and organisers accept AI-assisted scaffolding within the team's "not most of the project" rule.
+8. The Hack2Skill rules allow open-source libraries with links
 9. The two mandatory lab notebooks have been (or will be) completed by someone on the team; the guidebook says they are prerequisites.
 
 ---
