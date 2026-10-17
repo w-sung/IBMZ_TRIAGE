@@ -1,13 +1,23 @@
 # TRIAGE - Development Log & AI Handoff
-**Branch:** `arno-dev-branch` (chunk 1), chunk 2 files are new and listed below
-**Current Phase:** Chunk 2 code complete (routing, traffic, hospitals). Chunk 3 next.
+**Branches:** `arno-dev-branch` (chunk 1), `tom-dev-branch` (chunk 2)
+**Current Phase:** Chunk 2 done: code, tests, `main.py` wiring and the real Manchester graph. Chunk 3 next.
 
 ## Status by chunk
 | Chunk | Status |
 |---|---|
 | 1. Foundation and synthetic data | Done |
-| 2. Manchester map, hospitals, routing, time-of-day traffic | Code done and tested on a synthetic dev graph. **Real OSM graph and hospital coordinates still need `scripts/build_graph.py` run in WSL.** |
+| 2. Manchester map, hospitals, routing, time-of-day traffic | **Done.** Real OSM graph built (10,204 nodes, 21,008 edges) and all 8 hospitals resolved. Still to do: check hospital pins on a map, re-measure the 100 ms routing budget on the real graph. |
 | 3 to 7 | Not started |
+
+## Changelog (latest first)
+**2026-10-17, chunk 2 finished**
+- Ran `scripts/build_graph.py` for real: `data/graph/nodes.csv` and `edges.csv` now exist, and `data/hospitals.json` has `lat`, `lon`, `node_id` filled for all 8 hospitals.
+- First run crashed with `ImportError: scikit-learn must be installed ... to search an unprojected graph`. Fix: `pip install scikit-learn` (build step only).
+- `main.py` wired to chunk 2: new `/api/hospitals`, `/api/traffic`, `/api/route`, and routing status in `/api/health`.
+- Roadblock bug found by a test and fixed: distance was measured to a road's midpoint, so blocks on junctions missed long roads. It now uses distance to the whole segment.
+- Folder `Scripts/` renamed to `scripts/` (Linux and Docker are case-sensitive).
+- `.gitignore` now excludes `cache/` (osmnx download cache) and `.venv/`.
+- Tests: 11 passing (6 routing, 5 API).
 
 ## 1. Chunk 1: what was built (Arno)
 - **FastAPI skeleton:** `backend/app/main.py` with CORS and `/api/health`, which checks architecture (ready for s390x) and that data files exist.
@@ -44,7 +54,9 @@ python scripts/make_patients.py            # optional: --seed 42 --count 100
 
 **How to run**
 ```bash
-python scripts/build_graph.py              # WSL, once. Check each hospital's printed lat/lon on a map.
+pip install osmnx scikit-learn numpy scipy fastapi uvicorn httpx pytest   # inside a venv; osmnx is x86/Mac only
+python scripts/build_graph.py              # once. Check each hospital's printed lat/lon on a map.
+uvicorn backend.app.main:app --port 8000   # then open /api/health: routing.ready true, graph_source "graph"
 python -m pytest backend/tests -q          # from repo root
 ```
 ```python
@@ -65,9 +77,38 @@ wait_min = hosp[0]["base_wait_min"] * hospital_pressure(8.5)
 - Traffic: `level` is 0 to 1 (`LEVELS`: off_peak 0.3, normal 0.6, rush_hour 1.0). `hour=None` means the slider alone drives traffic; a number scales it by the clock curve. Roadblocks are `(lat, lon, radius_m)` and force multiplier 0.02. Ambulances feel half the slowdown.
 - `hospital_pressure(hour)` is a multiplier (0.75 to 1.5) for chunk 4 to apply to `base_wait_min`.
 
+**`main.py` changes (v0.2.0)**
+- Added a startup `lifespan` that loads the graph, hospitals, `TravelEngine` and `TrafficModel` once. If data is missing it does **not** crash: `/api/health` reports why (`routing.reason`) and the new endpoints return 503.
+- Graph location: `GRAPH_DIR` env, else `data/graph`, else falls back to `data/graph_dev` (synthetic). `/api/health` shows `routing.graph_source`; if it says `graph_dev`, the data is not real. Other env vars: `HOSPITALS_PATH`, `DEFAULT_SEED` (traffic noise, default 42).
+- `/api/health` now also reports `hospitals_json`, `routing`, node and hospital counts. Chunk 1 fields are unchanged.
+- New endpoints (all GET):
+  - `/api/hospitals?hour=` hospitals with `beds_free` and `effective_wait_min` (base wait times time-of-day pressure).
+  - `/api/traffic?level=&hour=` mean and min speed multiplier for the slider and clock.
+  - `/api/route?hospital_id=&lat=&lon=&level=&hour=` ETA in seconds and the road route as `[lat, lon]` points.
+- Handlers are `async def` with no awaits on purpose: `TravelEngine` keeps its last result in memory, so they must not run in a threadpool at the same time. Chunk 4 should keep this in mind (give the sim its own engine).
+- `backend/tests/test_api.py`: 5 tests (health, hospitals, traffic, route and errors, 503 when data missing). Full suite: 11 passing.
+
+**Real build results (from `build_graph.py`)**
+| id | lat | lon |
+|---|---|---|
+| mri | 53.46292 | -2.22610 |
+| wyth | 53.39063 | -2.29093 |
+| salf | 53.48748 | -2.32434 |
+| nmgh | 53.51746 | -2.22875 |
+| oldh | 53.55207 | -2.12388 |
+| step | 53.38453 | -2.13341 |
+| tame | 53.49322 | -2.06998 |
+| traf | 53.45382 | -2.37065 |
+
+Geocoded by OSM Nominatim and snapped to the nearest road node. Not yet checked by eye on a map.
+
+**Repo hygiene**
+- **Commit:** `data/graph/nodes.csv`, `data/graph/edges.csv`, `data/hospitals.json`. LinuxONE cannot run `build_graph.py`, so it reads these files, and every teammate then routes on the same map.
+- **Never commit:** `cache/`, `.venv/`, `.env`. Use explicit paths with `git add`, not `git add .`.
+- There is a separate `TRIAGE_App/` folder with its own `backend` and `frontend`. Check whether it is a duplicate before committing.
+
 **Known limits and assumptions**
 - All traffic and hospital-pressure numbers are tunable guesses, not measurements. Say so in the README.
 - Hospital beds, waits and specialties are illustrative, not facts about those hospitals.
 - Roadblock distance uses the straight line between a road's endpoints, so sharply curved roads are approximate.
-- The 100 ms travel-time budget was only measured on the 900-node dev graph. Re-measure on the real graph (expect 10 to 20 thousand nodes).
-- `main.py` is not wired up yet: no `/api/hospitals` or traffic endpoint exists.
+- The 100 ms travel-time budget was only measured on the 900-node dev graph. **Still to re-measure on the real 10,204-node graph.**
