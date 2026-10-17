@@ -1,0 +1,1802 @@
+[
+  {
+    "patient_id": "p_001",
+    "age": 66,
+    "sex": "F",
+    "condition_id": "cardiac_arrest",
+    "vitals": {
+      "hr": 30,
+      "sbp": 50,
+      "rr": 10,
+      "spo2": 63,
+      "etco2": 5,
+      "spco": 2.2,
+      "methb": 1.0,
+      "ecg_rhythm": "vf",
+      "st_elevation": true,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_002",
+    "age": 74,
+    "sex": "M",
+    "condition_id": "stemi",
+    "vitals": {
+      "hr": 114,
+      "sbp": 80,
+      "rr": 22,
+      "spo2": 86,
+      "etco2": 27,
+      "spco": 3.4,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus",
+      "st_elevation": true,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_003",
+    "age": 52,
+    "sex": "F",
+    "condition_id": "major_haemorrhage",
+    "vitals": {
+      "hr": 130,
+      "sbp": 96,
+      "rr": 34,
+      "spo2": 83,
+      "etco2": 20,
+      "spco": 1.1,
+      "methb": 0.2,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_004",
+    "age": 55,
+    "sex": "M",
+    "condition_id": "severe_head_injury",
+    "vitals": {
+      "hr": 40,
+      "sbp": 128,
+      "rr": 8,
+      "spo2": 91,
+      "etco2": 47,
+      "spco": 1.1,
+      "methb": 0.7,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_005",
+    "age": 64,
+    "sex": "F",
+    "condition_id": "stroke",
+    "vitals": {
+      "hr": 75,
+      "sbp": 170,
+      "rr": 21,
+      "spo2": 97,
+      "etco2": 36,
+      "spco": 1.0,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_006",
+    "age": 83,
+    "sex": "M",
+    "condition_id": "resp_failure",
+    "vitals": {
+      "hr": 122,
+      "sbp": 104,
+      "rr": 23,
+      "spo2": 85,
+      "etco2": 48,
+      "spco": 2.3,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_007",
+    "age": 43,
+    "sex": "M",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 121,
+      "sbp": 53,
+      "rr": 36,
+      "spo2": 84,
+      "etco2": 31,
+      "spco": 1.0,
+      "methb": 1.0,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_008",
+    "age": 62,
+    "sex": "M",
+    "condition_id": "septic_shock",
+    "vitals": {
+      "hr": 129,
+      "sbp": 75,
+      "rr": 26,
+      "spo2": 92,
+      "etco2": 27,
+      "spco": 0.6,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_009",
+    "age": 84,
+    "sex": "M",
+    "condition_id": "ruptured_aaa",
+    "vitals": {
+      "hr": 127,
+      "sbp": 69,
+      "rr": 25,
+      "spo2": 87,
+      "etco2": 15,
+      "spco": 1.1,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_010",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 137,
+      "sbp": 83,
+      "rr": 37,
+      "spo2": 90,
+      "etco2": 41,
+      "spco": 1.5,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_011",
+    "age": 48,
+    "sex": "M",
+    "condition_id": "co_poisoning",
+    "vitals": {
+      "hr": 91,
+      "sbp": 107,
+      "rr": 24,
+      "spo2": 96,
+      "etco2": 34,
+      "spco": 35.6,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_012",
+    "age": 57,
+    "sex": "F",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 38,
+      "sbp": 87,
+      "rr": 6,
+      "spo2": 83,
+      "etco2": 44,
+      "spco": 2.9,
+      "methb": 1.1,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_013",
+    "age": 36,
+    "sex": "M",
+    "condition_id": "diabetic_emergency",
+    "vitals": {
+      "hr": 112,
+      "sbp": 101,
+      "rr": 21,
+      "spo2": 93,
+      "etco2": 36,
+      "spco": 0.8,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_014",
+    "age": 27,
+    "sex": "F",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 144,
+      "sbp": 95,
+      "rr": 28,
+      "spo2": 88,
+      "etco2": 28,
+      "spco": 21.0,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_015",
+    "age": 32,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 140,
+      "sbp": 63,
+      "rr": 25,
+      "spo2": 92,
+      "etco2": 18,
+      "spco": 1.0,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_016",
+    "age": 58,
+    "sex": "M",
+    "condition_id": "pulmonary_embolism",
+    "vitals": {
+      "hr": 96,
+      "sbp": 107,
+      "rr": 29,
+      "spo2": 83,
+      "etco2": 32,
+      "spco": 1.3,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_017",
+    "age": 44,
+    "sex": "F",
+    "condition_id": "status_epilepticus",
+    "vitals": {
+      "hr": 156,
+      "sbp": 152,
+      "rr": 19,
+      "spo2": 96,
+      "etco2": 55,
+      "spco": 1.9,
+      "methb": 0.1,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_018",
+    "age": 54,
+    "sex": "F",
+    "condition_id": "gi_bleed",
+    "vitals": {
+      "hr": 115,
+      "sbp": 101,
+      "rr": 23,
+      "spo2": 95,
+      "etco2": 29,
+      "spco": 1.6,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_019",
+    "age": 19,
+    "sex": "F",
+    "condition_id": "long_bone_fracture",
+    "vitals": {
+      "hr": 89,
+      "sbp": 107,
+      "rr": 26,
+      "spo2": 94,
+      "etco2": 35,
+      "spco": 1.1,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_020",
+    "age": 58,
+    "sex": "F",
+    "condition_id": "minor_injury",
+    "vitals": {
+      "hr": 99,
+      "sbp": 130,
+      "rr": 17,
+      "spo2": 98,
+      "etco2": 38,
+      "spco": 1.5,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_021",
+    "age": 27,
+    "sex": "F",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 109,
+      "sbp": 92,
+      "rr": 33,
+      "spo2": 89,
+      "etco2": 35,
+      "spco": 17.4,
+      "methb": 2.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_022",
+    "age": 25,
+    "sex": "M",
+    "condition_id": "cardiac_arrest",
+    "vitals": {
+      "hr": 63,
+      "sbp": 57,
+      "rr": 5,
+      "spo2": 70,
+      "etco2": 28,
+      "spco": 2.7,
+      "methb": 0.2,
+      "ecg_rhythm": "vf",
+      "st_elevation": true,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_023",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 95,
+      "sbp": 112,
+      "rr": 31,
+      "spo2": 83,
+      "etco2": 37,
+      "spco": 1.5,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_024",
+    "age": 73,
+    "sex": "M",
+    "condition_id": "ruptured_aaa",
+    "vitals": {
+      "hr": 140,
+      "sbp": 57,
+      "rr": 17,
+      "spo2": 85,
+      "etco2": 22,
+      "spco": 1.9,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_025",
+    "age": 49,
+    "sex": "F",
+    "condition_id": "co_poisoning",
+    "vitals": {
+      "hr": 89,
+      "sbp": 107,
+      "rr": 19,
+      "spo2": 96,
+      "etco2": 33,
+      "spco": 35.6,
+      "methb": 2.0,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_026",
+    "age": 30,
+    "sex": "F",
+    "condition_id": "long_bone_fracture",
+    "vitals": {
+      "hr": 92,
+      "sbp": 95,
+      "rr": 24,
+      "spo2": 97,
+      "etco2": 37,
+      "spco": 0.6,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_027",
+    "age": 70,
+    "sex": "M",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 122,
+      "sbp": 95,
+      "rr": 29,
+      "spo2": 91,
+      "etco2": 28,
+      "spco": 9.1,
+      "methb": 2.1,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_028",
+    "age": 67,
+    "sex": "F",
+    "condition_id": "septic_shock",
+    "vitals": {
+      "hr": 150,
+      "sbp": 96,
+      "rr": 20,
+      "spo2": 91,
+      "etco2": 33,
+      "spco": 0.8,
+      "methb": 1.0,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_029",
+    "age": 24,
+    "sex": "F",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 137,
+      "sbp": 80,
+      "rr": 24,
+      "spo2": 81,
+      "etco2": 30,
+      "spco": 1.2,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_030",
+    "age": 69,
+    "sex": "F",
+    "condition_id": "long_bone_fracture",
+    "vitals": {
+      "hr": 94,
+      "sbp": 96,
+      "rr": 21,
+      "spo2": 95,
+      "etco2": 41,
+      "spco": 0.6,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_031",
+    "age": 43,
+    "sex": "M",
+    "condition_id": "cardiac_arrest",
+    "vitals": {
+      "hr": 28,
+      "sbp": 75,
+      "rr": 2,
+      "spo2": 75,
+      "etco2": 20,
+      "spco": 3.2,
+      "methb": 0.5,
+      "ecg_rhythm": "vt",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_032",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 125,
+      "sbp": 78,
+      "rr": 25,
+      "spo2": 88,
+      "etco2": 37,
+      "spco": 0.5,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_033",
+    "age": 65,
+    "sex": "M",
+    "condition_id": "cardiac_arrest",
+    "vitals": {
+      "hr": 54,
+      "sbp": 31,
+      "rr": 2,
+      "spo2": 58,
+      "etco2": 17,
+      "spco": 0.2,
+      "methb": 0.8,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_034",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 124,
+      "sbp": 94,
+      "rr": 23,
+      "spo2": 83,
+      "etco2": 25,
+      "spco": 1.2,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_035",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "major_haemorrhage",
+    "vitals": {
+      "hr": 143,
+      "sbp": 71,
+      "rr": 23,
+      "spo2": 87,
+      "etco2": 25,
+      "spco": 0.7,
+      "methb": 0.1,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_036",
+    "age": 86,
+    "sex": "M",
+    "condition_id": "septic_shock",
+    "vitals": {
+      "hr": 158,
+      "sbp": 89,
+      "rr": 27,
+      "spo2": 93,
+      "etco2": 22,
+      "spco": 1.6,
+      "methb": 0.3,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_037",
+    "age": 24,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 116,
+      "sbp": 84,
+      "rr": 23,
+      "spo2": 95,
+      "etco2": 21,
+      "spco": 0.6,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_038",
+    "age": 29,
+    "sex": "F",
+    "condition_id": "status_epilepticus",
+    "vitals": {
+      "hr": 121,
+      "sbp": 133,
+      "rr": 20,
+      "spo2": 85,
+      "etco2": 60,
+      "spco": 1.5,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_039",
+    "age": 21,
+    "sex": "F",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 137,
+      "sbp": 98,
+      "rr": 31,
+      "spo2": 94,
+      "etco2": 27,
+      "spco": 8.4,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_040",
+    "age": 32,
+    "sex": "M",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 67,
+      "sbp": 101,
+      "rr": 4,
+      "spo2": 81,
+      "etco2": 44,
+      "spco": 3.0,
+      "methb": 0.5,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_041",
+    "age": 42,
+    "sex": "M",
+    "condition_id": "diabetic_emergency",
+    "vitals": {
+      "hr": 82,
+      "sbp": 122,
+      "rr": 23,
+      "spo2": 97,
+      "etco2": 20,
+      "spco": 1.0,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_042",
+    "age": 70,
+    "sex": "M",
+    "condition_id": "ruptured_aaa",
+    "vitals": {
+      "hr": 137,
+      "sbp": 69,
+      "rr": 21,
+      "spo2": 88,
+      "etco2": 13,
+      "spco": 1.7,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_043",
+    "age": 37,
+    "sex": "M",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 60,
+      "sbp": 95,
+      "rr": 6,
+      "spo2": 82,
+      "etco2": 73,
+      "spco": 1.6,
+      "methb": 0.6,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_044",
+    "age": 28,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 108,
+      "sbp": 59,
+      "rr": 23,
+      "spo2": 95,
+      "etco2": 30,
+      "spco": 1.1,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_045",
+    "age": 23,
+    "sex": "F",
+    "condition_id": "diabetic_emergency",
+    "vitals": {
+      "hr": 121,
+      "sbp": 94,
+      "rr": 19,
+      "spo2": 98,
+      "etco2": 29,
+      "spco": 1.5,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_046",
+    "age": 19,
+    "sex": "F",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 52,
+      "sbp": 91,
+      "rr": 6,
+      "spo2": 76,
+      "etco2": 62,
+      "spco": 1.2,
+      "methb": 1.0,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_047",
+    "age": 49,
+    "sex": "F",
+    "condition_id": "resp_failure",
+    "vitals": {
+      "hr": 85,
+      "sbp": 126,
+      "rr": 26,
+      "spo2": 79,
+      "etco2": 55,
+      "spco": 1.5,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_048",
+    "age": 31,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 149,
+      "sbp": 74,
+      "rr": 28,
+      "spo2": 92,
+      "etco2": 23,
+      "spco": 1.1,
+      "methb": 1.1,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_049",
+    "age": 65,
+    "sex": "F",
+    "condition_id": "ruptured_aaa",
+    "vitals": {
+      "hr": 121,
+      "sbp": 69,
+      "rr": 31,
+      "spo2": 85,
+      "etco2": 21,
+      "spco": 0.5,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": true,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_050",
+    "age": 42,
+    "sex": "M",
+    "condition_id": "diabetic_emergency",
+    "vitals": {
+      "hr": 97,
+      "sbp": 83,
+      "rr": 25,
+      "spo2": 92,
+      "etco2": 28,
+      "spco": 0.7,
+      "methb": 1.1,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_051",
+    "age": 24,
+    "sex": "M",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 153,
+      "sbp": 75,
+      "rr": 26,
+      "spo2": 87,
+      "etco2": 26,
+      "spco": 0.3,
+      "methb": 0.3,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_052",
+    "age": 43,
+    "sex": "F",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 136,
+      "sbp": 72,
+      "rr": 30,
+      "spo2": 91,
+      "etco2": 28,
+      "spco": 1.1,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_053",
+    "age": 47,
+    "sex": "F",
+    "condition_id": "long_bone_fracture",
+    "vitals": {
+      "hr": 109,
+      "sbp": 129,
+      "rr": 19,
+      "spo2": 97,
+      "etco2": 36,
+      "spco": 1.6,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_054",
+    "age": 61,
+    "sex": "F",
+    "condition_id": "long_bone_fracture",
+    "vitals": {
+      "hr": 94,
+      "sbp": 103,
+      "rr": 18,
+      "spo2": 94,
+      "etco2": 35,
+      "spco": 1.2,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_055",
+    "age": 31,
+    "sex": "M",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 147,
+      "sbp": 92,
+      "rr": 16,
+      "spo2": 91,
+      "etco2": 34,
+      "spco": 10.3,
+      "methb": 1.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_056",
+    "age": 28,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 116,
+      "sbp": 73,
+      "rr": 30,
+      "spo2": 92,
+      "etco2": 24,
+      "spco": 0.9,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_057",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 139,
+      "sbp": 100,
+      "rr": 24,
+      "spo2": 89,
+      "etco2": 31,
+      "spco": 0.7,
+      "methb": 1.1,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_058",
+    "age": 28,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 90,
+      "sbp": 78,
+      "rr": 31,
+      "spo2": 90,
+      "etco2": 31,
+      "spco": 1.0,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_059",
+    "age": 48,
+    "sex": "M",
+    "condition_id": "long_bone_fracture",
+    "vitals": {
+      "hr": 95,
+      "sbp": 127,
+      "rr": 15,
+      "spo2": 96,
+      "etco2": 35,
+      "spco": 0.6,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_060",
+    "age": 79,
+    "sex": "F",
+    "condition_id": "pulmonary_embolism",
+    "vitals": {
+      "hr": 115,
+      "sbp": 91,
+      "rr": 29,
+      "spo2": 89,
+      "etco2": 28,
+      "spco": 0.4,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_061",
+    "age": 32,
+    "sex": "M",
+    "condition_id": "major_haemorrhage",
+    "vitals": {
+      "hr": 147,
+      "sbp": 60,
+      "rr": 31,
+      "spo2": 95,
+      "etco2": 24,
+      "spco": 0.6,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_062",
+    "age": 31,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 122,
+      "sbp": 89,
+      "rr": 25,
+      "spo2": 91,
+      "etco2": 23,
+      "spco": 1.4,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_063",
+    "age": 55,
+    "sex": "M",
+    "condition_id": "gi_bleed",
+    "vitals": {
+      "hr": 120,
+      "sbp": 114,
+      "rr": 28,
+      "spo2": 92,
+      "etco2": 27,
+      "spco": 1.9,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_064",
+    "age": 62,
+    "sex": "F",
+    "condition_id": "pulmonary_embolism",
+    "vitals": {
+      "hr": 137,
+      "sbp": 111,
+      "rr": 25,
+      "spo2": 93,
+      "etco2": 20,
+      "spco": 1.1,
+      "methb": 1.2,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_065",
+    "age": 66,
+    "sex": "M",
+    "condition_id": "cardiac_arrest",
+    "vitals": {
+      "hr": 60,
+      "sbp": 68,
+      "rr": 4,
+      "spo2": 79,
+      "etco2": 20,
+      "spco": 0.9,
+      "methb": 1.2,
+      "ecg_rhythm": "vt",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_066",
+    "age": 45,
+    "sex": "F",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 129,
+      "sbp": 87,
+      "rr": 25,
+      "spo2": 85,
+      "etco2": 35,
+      "spco": 1.4,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_067",
+    "age": 69,
+    "sex": "F",
+    "condition_id": "stroke",
+    "vitals": {
+      "hr": 88,
+      "sbp": 124,
+      "rr": 14,
+      "spo2": 95,
+      "etco2": 35,
+      "spco": 0.6,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_068",
+    "age": 91,
+    "sex": "F",
+    "condition_id": "stroke",
+    "vitals": {
+      "hr": 102,
+      "sbp": 148,
+      "rr": 15,
+      "spo2": 95,
+      "etco2": 40,
+      "spco": 1.0,
+      "methb": 0.4,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_069",
+    "age": 64,
+    "sex": "F",
+    "condition_id": "pulmonary_embolism",
+    "vitals": {
+      "hr": 115,
+      "sbp": 70,
+      "rr": 20,
+      "spo2": 94,
+      "etco2": 25,
+      "spco": 1.1,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_070",
+    "age": 45,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 123,
+      "sbp": 80,
+      "rr": 36,
+      "spo2": 89,
+      "etco2": 35,
+      "spco": 0.2,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_071",
+    "age": 28,
+    "sex": "M",
+    "condition_id": "minor_injury",
+    "vitals": {
+      "hr": 67,
+      "sbp": 126,
+      "rr": 18,
+      "spo2": 97,
+      "etco2": 40,
+      "spco": 1.3,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_072",
+    "age": 46,
+    "sex": "M",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 55,
+      "sbp": 86,
+      "rr": 4,
+      "spo2": 75,
+      "etco2": 78,
+      "spco": 2.4,
+      "methb": 0.6,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_073",
+    "age": 73,
+    "sex": "M",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 130,
+      "sbp": 114,
+      "rr": 32,
+      "spo2": 87,
+      "etco2": 18,
+      "spco": 2.0,
+      "methb": 0.3,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_074",
+    "age": 60,
+    "sex": "M",
+    "condition_id": "septic_shock",
+    "vitals": {
+      "hr": 113,
+      "sbp": 67,
+      "rr": 22,
+      "spo2": 89,
+      "etco2": 20,
+      "spco": 1.7,
+      "methb": 0.4,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_075",
+    "age": 37,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 135,
+      "sbp": 86,
+      "rr": 25,
+      "spo2": 89,
+      "etco2": 26,
+      "spco": 1.1,
+      "methb": 0.1,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_076",
+    "age": 52,
+    "sex": "F",
+    "condition_id": "resp_failure",
+    "vitals": {
+      "hr": 154,
+      "sbp": 128,
+      "rr": 24,
+      "spo2": 83,
+      "etco2": 57,
+      "spco": 2.0,
+      "methb": 0.7,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_077",
+    "age": 83,
+    "sex": "F",
+    "condition_id": "diabetic_emergency",
+    "vitals": {
+      "hr": 103,
+      "sbp": 103,
+      "rr": 23,
+      "spo2": 93,
+      "etco2": 23,
+      "spco": 0.8,
+      "methb": 0.3,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  },
+  {
+    "patient_id": "p_078",
+    "age": 32,
+    "sex": "M",
+    "condition_id": "severe_head_injury",
+    "vitals": {
+      "hr": 44,
+      "sbp": 176,
+      "rr": 10,
+      "spo2": 82,
+      "etco2": 40,
+      "spco": 0.7,
+      "methb": 0.3,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_079",
+    "age": 76,
+    "sex": "M",
+    "condition_id": "stemi",
+    "vitals": {
+      "hr": 107,
+      "sbp": 123,
+      "rr": 28,
+      "spo2": 93,
+      "etco2": 34,
+      "spco": 1.1,
+      "methb": 0.3,
+      "ecg_rhythm": "vt",
+      "st_elevation": true,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_080",
+    "age": 85,
+    "sex": "M",
+    "condition_id": "stroke",
+    "vitals": {
+      "hr": 71,
+      "sbp": 123,
+      "rr": 12,
+      "spo2": 92,
+      "etco2": 44,
+      "spco": 1.4,
+      "methb": 1.0,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_081",
+    "age": 18,
+    "sex": "F",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 47,
+      "sbp": 85,
+      "rr": 7,
+      "spo2": 90,
+      "etco2": 69,
+      "spco": 0.7,
+      "methb": 1.0,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_082",
+    "age": 46,
+    "sex": "M",
+    "condition_id": "co_poisoning",
+    "vitals": {
+      "hr": 118,
+      "sbp": 133,
+      "rr": 27,
+      "spo2": 96,
+      "etco2": 36,
+      "spco": 28.2,
+      "methb": 1.0,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_083",
+    "age": 87,
+    "sex": "M",
+    "condition_id": "stroke",
+    "vitals": {
+      "hr": 86,
+      "sbp": 202,
+      "rr": 23,
+      "spo2": 95,
+      "etco2": 41,
+      "spco": 1.5,
+      "methb": 0.3,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_084",
+    "age": 18,
+    "sex": "M",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 122,
+      "sbp": 97,
+      "rr": 20,
+      "spo2": 94,
+      "etco2": 35,
+      "spco": 13.5,
+      "methb": 1.7,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_085",
+    "age": 30,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 129,
+      "sbp": 84,
+      "rr": 24,
+      "spo2": 95,
+      "etco2": 29,
+      "spco": 0.1,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_086",
+    "age": 22,
+    "sex": "F",
+    "condition_id": "minor_injury",
+    "vitals": {
+      "hr": 69,
+      "sbp": 139,
+      "rr": 15,
+      "spo2": 97,
+      "etco2": 40,
+      "spco": 1.4,
+      "methb": 0.7,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_087",
+    "age": 18,
+    "sex": "F",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 143,
+      "sbp": 85,
+      "rr": 25,
+      "spo2": 87,
+      "etco2": 26,
+      "spco": 0.9,
+      "methb": 0.8,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_088",
+    "age": 41,
+    "sex": "F",
+    "condition_id": "major_haemorrhage",
+    "vitals": {
+      "hr": 128,
+      "sbp": 72,
+      "rr": 19,
+      "spo2": 84,
+      "etco2": 22,
+      "spco": 0.7,
+      "methb": 0.5,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_089",
+    "age": 59,
+    "sex": "M",
+    "condition_id": "severe_burns",
+    "vitals": {
+      "hr": 107,
+      "sbp": 82,
+      "rr": 23,
+      "spo2": 88,
+      "etco2": 29,
+      "spco": 9.8,
+      "methb": 1.3,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_090",
+    "age": 61,
+    "sex": "M",
+    "condition_id": "ruptured_aaa",
+    "vitals": {
+      "hr": 113,
+      "sbp": 95,
+      "rr": 25,
+      "spo2": 84,
+      "etco2": 17,
+      "spco": 3.5,
+      "methb": 0.9,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_091",
+    "age": 55,
+    "sex": "F",
+    "condition_id": "chest_trauma",
+    "vitals": {
+      "hr": 119,
+      "sbp": 98,
+      "rr": 37,
+      "spo2": 92,
+      "etco2": 33,
+      "spco": 1.5,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_092",
+    "age": 32,
+    "sex": "M",
+    "condition_id": "resp_failure",
+    "vitals": {
+      "hr": 143,
+      "sbp": 111,
+      "rr": 31,
+      "spo2": 87,
+      "etco2": 56,
+      "spco": 0.7,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_093",
+    "age": 27,
+    "sex": "F",
+    "condition_id": "obstetric_haemorrhage",
+    "vitals": {
+      "hr": 137,
+      "sbp": 72,
+      "rr": 29,
+      "spo2": 89,
+      "etco2": 20,
+      "spco": 0.6,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_094",
+    "age": 31,
+    "sex": "F",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 140,
+      "sbp": 78,
+      "rr": 33,
+      "spo2": 94,
+      "etco2": 30,
+      "spco": 1.2,
+      "methb": 0.9,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_095",
+    "age": 57,
+    "sex": "F",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 66,
+      "sbp": 123,
+      "rr": 7,
+      "spo2": 87,
+      "etco2": 50,
+      "spco": 0.7,
+      "methb": 0.5,
+      "ecg_rhythm": "brady",
+      "st_elevation": false,
+      "consciousness": "unresponsive"
+    }
+  },
+  {
+    "patient_id": "p_096",
+    "age": 67,
+    "sex": "F",
+    "condition_id": "co_poisoning",
+    "vitals": {
+      "hr": 142,
+      "sbp": 102,
+      "rr": 20,
+      "spo2": 95,
+      "etco2": 34,
+      "spco": 18.9,
+      "methb": 1.6,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_097",
+    "age": 66,
+    "sex": "M",
+    "condition_id": "septic_shock",
+    "vitals": {
+      "hr": 130,
+      "sbp": 91,
+      "rr": 29,
+      "spo2": 93,
+      "etco2": 24,
+      "spco": 1.1,
+      "methb": 0.2,
+      "ecg_rhythm": "af",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_098",
+    "age": 38,
+    "sex": "M",
+    "condition_id": "anaphylaxis",
+    "vitals": {
+      "hr": 138,
+      "sbp": 109,
+      "rr": 35,
+      "spo2": 84,
+      "etco2": 26,
+      "spco": 0.4,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus_tach",
+      "st_elevation": false,
+      "consciousness": "voice"
+    }
+  },
+  {
+    "patient_id": "p_099",
+    "age": 18,
+    "sex": "F",
+    "condition_id": "minor_injury",
+    "vitals": {
+      "hr": 100,
+      "sbp": 111,
+      "rr": 16,
+      "spo2": 97,
+      "etco2": 36,
+      "spco": 0.6,
+      "methb": 0.4,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "alert"
+    }
+  },
+  {
+    "patient_id": "p_100",
+    "age": 38,
+    "sex": "M",
+    "condition_id": "opioid_overdose",
+    "vitals": {
+      "hr": 52,
+      "sbp": 104,
+      "rr": 4,
+      "spo2": 75,
+      "etco2": 58,
+      "spco": 0.4,
+      "methb": 0.6,
+      "ecg_rhythm": "sinus",
+      "st_elevation": false,
+      "consciousness": "pain"
+    }
+  }
+]
