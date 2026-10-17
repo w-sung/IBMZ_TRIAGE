@@ -8,9 +8,8 @@ This file is the single source of truth for humans and AI coding assistants. If 
 
 ## 0. Rules for anyone (human or AI) writing code here
 
-1. **Originality rule.** Datathon rules require the project to be original and created by participants during the event, and our team rule is that AI must not generate most of the project. So: AI assistants are pair programmers, not authors. Humans write and must be able to explain, line by line: `guidance/assign.py`, `guidance/cost.py`, `health/scoring.py`, `sim/engine.py`. AI may scaffold boilerplate, frontend styling, tests, Dockerfiles and docs. Log AI-assisted parts in `docs/AI_USE.md` (file, what, who reviewed). Ask organisers on Discord `#helpdesk` how they treat AI assistance and follow their answer over this file.
-2. **No real patient data, ever.** Everything is synthetic or public. The schema contains no name, NHS number, address or DOB, by design.
-3. **Secrets.** Never commit `.env`. Never put an API key in code, docs, chat or screenshots. See section 11.
+
+
 4. **Dependencies must run on s390x.** Before adding any package, check it installs on the LinuxONE box. Prefer pure-python wheels or Ubuntu apt packages. Ask the team before adding anything with compiled code.
 5. **Do not edit another module's contract** (section 7) without telling its owner. Contracts are how six people avoid merge conflicts.
 6. **The sim loop never makes network calls.** LLM calls are async, cached, timed out, and always have a template fallback.
