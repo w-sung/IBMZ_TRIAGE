@@ -1,13 +1,149 @@
 {
   "_note": "Beds, waits and specialties are ILLUSTRATIVE simulation inputs, not facts about these hospitals. lat/lon/node_id are filled by scripts/build_graph.py from OpenStreetMap; never type them by hand.",
   "hospitals": [
-    {"id": "mri",   "name": "Manchester Royal Infirmary", "osm_query": "Manchester Royal Infirmary, Manchester, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 40, "beds_occupied": 30, "base_wait_min": 15, "service_min": 6, "specialties": ["general", "cardiac", "trauma", "stroke", "vascular"], "theatre_ready": true},
-    {"id": "wyth",  "name": "Wythenshawe Hospital", "osm_query": "Wythenshawe Hospital, Manchester, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 32, "beds_occupied": 22, "base_wait_min": 10, "service_min": 5, "specialties": ["general", "cardiac", "burns", "stroke"], "theatre_ready": true},
-    {"id": "salf",  "name": "Salford Royal", "osm_query": "Salford Royal Hospital, Salford, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 36, "beds_occupied": 26, "base_wait_min": 12, "service_min": 5, "specialties": ["general", "trauma", "stroke", "vascular"], "theatre_ready": true},
-    {"id": "nmgh",  "name": "North Manchester General", "osm_query": "North Manchester General Hospital, Manchester, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 24, "beds_occupied": 19, "base_wait_min": 20, "service_min": 7, "specialties": ["general", "obstetric"], "theatre_ready": false},
-    {"id": "oldh",  "name": "Royal Oldham", "osm_query": "Royal Oldham Hospital, Oldham, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 28, "beds_occupied": 20, "base_wait_min": 12, "service_min": 5, "specialties": ["general", "trauma", "obstetric"], "theatre_ready": true},
-    {"id": "step",  "name": "Stepping Hill", "osm_query": "Stepping Hill Hospital, Stockport, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 26, "beds_occupied": 18, "base_wait_min": 8, "service_min": 4, "specialties": ["general", "cardiac"], "theatre_ready": true},
-    {"id": "tame",  "name": "Tameside General", "osm_query": "Tameside General Hospital, Ashton-under-Lyne, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 22, "beds_occupied": 17, "base_wait_min": 14, "service_min": 6, "specialties": ["general", "stroke"], "theatre_ready": false},
-    {"id": "traf",  "name": "Trafford General", "osm_query": "Trafford General Hospital, Manchester, UK", "lat": null, "lon": null, "node_id": null, "beds_total": 20, "beds_occupied": 12, "base_wait_min": 5, "service_min": 4, "specialties": ["general", "obstetric"], "theatre_ready": false}
+    {
+      "id": "mri",
+      "name": "Manchester Royal Infirmary",
+      "osm_query": "Manchester Royal Infirmary, Manchester, UK",
+      "lat": 53.4629229,
+      "lon": -2.2261028,
+      "node_id": 353961870,
+      "beds_total": 40,
+      "beds_occupied": 30,
+      "base_wait_min": 15,
+      "service_min": 6,
+      "specialties": [
+        "general",
+        "cardiac",
+        "trauma",
+        "stroke",
+        "vascular"
+      ],
+      "theatre_ready": true
+    },
+    {
+      "id": "wyth",
+      "name": "Wythenshawe Hospital",
+      "osm_query": "Wythenshawe Hospital, Manchester, UK",
+      "lat": 53.3906276,
+      "lon": -2.2909306,
+      "node_id": 539177843,
+      "beds_total": 32,
+      "beds_occupied": 22,
+      "base_wait_min": 10,
+      "service_min": 5,
+      "specialties": [
+        "general",
+        "cardiac",
+        "burns",
+        "stroke"
+      ],
+      "theatre_ready": true
+    },
+    {
+      "id": "salf",
+      "name": "Salford Royal",
+      "osm_query": "Salford Royal Hospital, Salford, UK",
+      "lat": 53.4874778,
+      "lon": -2.3243368,
+      "node_id": 2623870620,
+      "beds_total": 36,
+      "beds_occupied": 26,
+      "base_wait_min": 12,
+      "service_min": 5,
+      "specialties": [
+        "general",
+        "trauma",
+        "stroke",
+        "vascular"
+      ],
+      "theatre_ready": true
+    },
+    {
+      "id": "nmgh",
+      "name": "North Manchester General",
+      "osm_query": "North Manchester General Hospital, Manchester, UK",
+      "lat": 53.5174601,
+      "lon": -2.2287489,
+      "node_id": 1510720567,
+      "beds_total": 24,
+      "beds_occupied": 19,
+      "base_wait_min": 20,
+      "service_min": 7,
+      "specialties": [
+        "general",
+        "obstetric"
+      ],
+      "theatre_ready": false
+    },
+    {
+      "id": "oldh",
+      "name": "Royal Oldham",
+      "osm_query": "Royal Oldham Hospital, Oldham, UK",
+      "lat": 53.5520716,
+      "lon": -2.1238776,
+      "node_id": 784045384,
+      "beds_total": 28,
+      "beds_occupied": 20,
+      "base_wait_min": 12,
+      "service_min": 5,
+      "specialties": [
+        "general",
+        "trauma",
+        "obstetric"
+      ],
+      "theatre_ready": true
+    },
+    {
+      "id": "step",
+      "name": "Stepping Hill",
+      "osm_query": "Stepping Hill Hospital, Stockport, UK",
+      "lat": 53.3845347,
+      "lon": -2.1334084,
+      "node_id": 2468855100,
+      "beds_total": 26,
+      "beds_occupied": 18,
+      "base_wait_min": 8,
+      "service_min": 4,
+      "specialties": [
+        "general",
+        "cardiac"
+      ],
+      "theatre_ready": true
+    },
+    {
+      "id": "tame",
+      "name": "Tameside General",
+      "osm_query": "Tameside General Hospital, Ashton-under-Lyne, UK",
+      "lat": 53.4932154,
+      "lon": -2.0699798,
+      "node_id": 983128355,
+      "beds_total": 22,
+      "beds_occupied": 17,
+      "base_wait_min": 14,
+      "service_min": 6,
+      "specialties": [
+        "general",
+        "stroke"
+      ],
+      "theatre_ready": false
+    },
+    {
+      "id": "traf",
+      "name": "Trafford General",
+      "osm_query": "Trafford General Hospital, Manchester, UK",
+      "lat": 53.4538246,
+      "lon": -2.3706526,
+      "node_id": 709287563,
+      "beds_total": 20,
+      "beds_occupied": 12,
+      "base_wait_min": 5,
+      "service_min": 4,
+      "specialties": [
+        "general",
+        "obstetric"
+      ],
+      "theatre_ready": false
+    }
   ]
 }
