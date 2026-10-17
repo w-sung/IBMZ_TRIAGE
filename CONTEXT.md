@@ -10,11 +10,11 @@ This file is the single source of truth for humans and AI coding assistants. If 
 
 
 
-4. **Dependencies must run on s390x.** Before adding any package, check it installs on the LinuxONE box. Prefer pure-python wheels or Ubuntu apt packages. Ask the team before adding anything with compiled code.
-5. **Do not edit another module's contract** (section 7) without telling its owner. Contracts are how six people avoid merge conflicts.
-6. **The sim loop never makes network calls.** LLM calls are async, cached, timed out, and always have a template fallback.
-7. **Determinism.** All randomness comes from one seeded RNG per scenario. Same seed plus same policy gives the same run.
-8. Small commits, own branch (`name/feature`), PR into `main`, one reviewer. Python 3.12, type hints, `ruff` format, tests for anything in `guidance/` and `health/`.
+1. **Dependencies must run on s390x.** Before adding any package, check it installs on the LinuxONE box. Prefer pure-python wheels or Ubuntu apt packages. Ask the team before adding anything with compiled code.
+2. **Do not edit another module's contract** (section 7) without telling its owner. Contracts are how six people avoid merge conflicts.
+3. **The sim loop never makes network calls.** LLM calls are async, cached, timed out, and always have a template fallback.
+4. **Determinism.** All randomness comes from one seeded RNG per scenario. Same seed plus same policy gives the same run.
+5. Small commits, own branch (`name/feature`), PR into `main`, one reviewer. Python 3.12, type hints, `ruff` format, tests for anything in `guidance/` and `health/`.
 
 ---
 
@@ -256,7 +256,6 @@ Two parts. Keep them separate.
 **Part A: current severity S0 (0 to 100), predicted by a model.**
 - Labelling function (`scoring.py`, hand-written, cited): points from NEWS2-style thresholds on rr, spo2, sbp, hr, consciousness; plus shock index term; plus age term; plus ECG term (vf, vt, asystole are maximal; st elevation adds); plus toxicology terms (high SpCO, high MetHb); plus condition severity weight. Scale to 0 to 100.
 - Generate about 5,000 synthetic patients, label with the function plus noise, train `HistGradientBoostingRegressor`. Model interface: `predict(patient) -> float`.
-- **Honest framing:** this is a surrogate that learns the clinical scoring logic from synthetic data. It is not clinically validated and must not be described as such. Its value in the demo is speed, a clean interface, and running on LinuxONE.
 - Tests (must pass): lowering SpO2 never lowers the score; lowering systolic BP never lowers it; cardiac_arrest scores above minor_injury for any vitals draw; score stays in 0 to 100; each condition's mean S0 falls inside its expected band.
 
 **Part B: rate of change, deterministic.**
@@ -388,11 +387,10 @@ WebSocket `/ws` pushes one message per wall tick:
 
 ## 9. Evaluation (what the headline number means)
 
-- Same seed gives identical patients, start positions, traffic and roadblocks under both policies.
+- AI randomly generates the metrics, in reasonable ranges for emergencies
 - Metrics per run: (1) sum of deterioration at treatment start, (2) mean and 90th percentile time to treatment by category, (3) patients sent to hospitals lacking required specialty, (4) corridor overflows, (5) replans and diversions.
-- Batch: 30 seeds per scenario size (5 and 10 ambulances), report mean and a 95 percent interval. The demo shows one run live and the batch number as the headline.
 - Scenarios must include at least one where nearest-hospital is genuinely fine (light load). TRIAGE should roughly tie there. Showing that is credible. If TRIAGE wins every scenario by a lot, assume a bug or an unfair sim first.
-- Never present simulated improvement as expected real-world improvement.
+
 
 ---
 
@@ -507,7 +505,7 @@ Assumes work starts around 13:00 BST on 17 Oct and the submission deadline is no
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| **Vibecoding the whole thing breaks the originality rule** | High | Section 0 ownership list; `docs/AI_USE.md`; ask organisers. |
+
 | Deterioration model learns our own formula, so "AI" is thin | Medium | Be honest: it is a surrogate. The novelty and the demo strength are the joint assignment and the simulation. Do not oversell clinical accuracy. |
 | Sim is too kind to TRIAGE (planner sees what the sim does) | High | Hidden noise in sim (section 6.6), light-load scenarios where results tie, many seeds. |
 | s390x package or endianness surprise late at night | High | Step 0 spike; train on the box; no pickles in git; apt packages; pure-python fallbacks. |
