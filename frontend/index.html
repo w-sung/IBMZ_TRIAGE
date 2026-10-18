@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRIAGE — Real-Time AI Ambulance Guidance Engine | IBM Z Datathon 2026</title>
+
+  <!-- Google Fonts: Inter & JetBrains Mono for crisp telemetry numbers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Leaflet 1.9.4 CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <!-- Custom TRIAGE Dark Glassmorphism Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="landing-overlay" class="landing-overlay">
+    <div class="landing-card">
+      <div class="landing-badge-row">
+        <span class="ibm-badge">IBM Z / LinuxONE (s390x)</span>
+        <span class="theme-badge">Real-Time AI for Critical Decisions</span>
+      </div>
+      <h1 class="landing-title">TRIAGE</h1>
+      <p class="landing-subtitle">
+        Time-critical Routing &amp; Intelligent Ambulance Guidance Engine
+      </p>
+      <p class="landing-description">
+        In England, <strong>44,000 patients suffer severe harm annually</strong> from 30+ minute ambulance handover delays.
+        Standard routing sends nearby ambulances to the <em>same</em> closest hospital—creating lethal queues.
+        <strong>TRIAGE</strong> combines Predictive AI vitals deterioration, Hungarian joint-optimization, and DeepSeek
+        reception pre-alerts to eliminate hospital stampedes in real time.
+      </p>
+
+      <div class="landing-pillars">
+        <div class="pillar-box">
+          <span class="pillar-role">1. PREDICT</span>
+          <strong>HistGradientBoosting AI</strong>
+          <span>Scores NEWS2 vitals severity S₀ &amp; live deterioration rate (+pts/min) on LinuxONE</span>
+        </div>
+        <div class="pillar-box">
+          <span class="pillar-role">2. DECIDE</span>
+          <strong>Hungarian Anti-Stampede</strong>
+          <span>Jointly optimizes 5–10 parallel ambulances across 8 Greater Manchester NHS hospitals</span>
+        </div>
+        <div class="pillar-box">
+          <span class="pillar-role">3. COMMUNICATE</span>
+          <strong>DeepSeek Pre-Alert</strong>
+          <span>Streams 40-word reception prep notes ahead of arrival with zero hallucinated numbers</span>
+        </div>
+      </div>
+
+      <button id="btn-launch-app" class="btn-launch">
+        <span>Launch Live Manchester Simulation</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <header class="top-hud-bar">
+    <div class="brand-cluster">
+      <div class="pulse-dot"></div>
+      <div>
+        <div class="brand-name">TRIAGE <span class="brand-tag">MANCHESTER NHS DISPATCH</span></div>
+        <div class="brand-arch" id="hud-arch-label">IBM LinuxONE · CSR Backwards Dijkstra · Hungarian Solver</div>
+      </div>
+    </div>
+
+    <div class="telemetry-pills">
+      <div class="telemetry-pill">
+        <span class="t-label">SIM CLOCK</span>
+        <span class="t-value mono" id="hud-sim-clock">00:00</span>
+      </div>
+      <div class="telemetry-pill">
+        <span class="t-label">EN ROUTE</span>
+        <span class="t-value mono" id="hud-enroute-count">0</span>
+      </div>
+      <div class="telemetry-pill">
+        <span class="t-label">QUEUED / ARRIVED</span>
+        <span class="t-value mono" id="hud-arrived-count">0</span>
+      </div>
+      <div class="telemetry-pill highlight-diversion">
+        <span class="t-label">AI DIVERSIONS</span>
+        <span class="t-value mono" id="hud-diversion-count">0</span>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btn-open-impact" class="btn-impact-Quick">
+        <span>⚡ 44,000 Impact Calculator</span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="control-sidebar">
+    <div class="sidebar-section">
+      <div class="section-header">
+        <span class="section-step">01</span>
+        <h2>FLEET WAVE SPAWNER</h2>
+      </div>
+      <p class="section-hint">Spawn simultaneous 999 emergency calls across Greater Manchester:</p>
+      <div class="btn-grid-2">
+        <button id="btn-spawn-5" class="btn-glass active-spawn" data-count="5">
+          <span class="btn-big-num">5</span>
+          <span class="btn-sub-text">Ambulances</span>
+        </button>
+        <button id="btn-spawn-10" class="btn-glass" data-count="10">
+          <span class="btn-big-num">10</span>
+          <span class="btn-sub-text">Ambulances (Surge)</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-header">
+        <span class="section-step">02</span>
+        <h2>ROUTING POLICY BRAIN</h2>
+      </div>
+      <div class="policy-toggle-group" role="group" aria-label="Routing Policy Toggle">
+        <button id="btn-policy-triage" class="policy-btn active" data-policy="TRIAGE">
+          <div class="policy-title">🧠 TRIAGE AI</div>
+          <div class="policy-desc">Joint Anti-Stampede</div>
+        </button>
+        <button id="btn-policy-nearest" class="policy-btn" data-policy="NEAREST">
+          <div class="policy-title">📍 NEAREST</div>
+          <div class="policy-desc">Naive Closest ED</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-header">
+        <span class="section-step">03</span>
+        <h2>TIME OF DAY &amp; TRAFFIC</h2>
+      </div>
+      <div class="traffic-preset-row">
+        <button class="traffic-chip active" data-level="off_peak" data-hour="20.37">🌙 8:22 PM Quiet</button>
+        <button class="traffic-chip" data-level="normal" data-hour="10.0">☀️ 10:00 AM Busy</button>
+        <button class="traffic-chip" data-level="rush_hour" data-hour="8.5">🚨 8:30 AM Rush</button>
+      </div>
+
+      <div class="speed-row">
+        <span class="speed-label">Sim Speed:</span>
+        <div class="speed-btns">
+          <button class="speed-chip" data-speed="5">5x</button>
+          <button class="speed-chip active" data-speed="15">15x (Demo)</button>
+          <button class="speed-chip" data-speed="30">30x (Fast)</button>
+        </div>
+      </div>
+
+      <div class="roadblock-row">
+        <button id="btn-roadblock-mode" class="btn-roadblock">
+          🚧 Drop Live Roadblock on Map
+        </button>
+        <button id="btn-clear-roadblocks" class="btn-clear-rb" title="Clear Roadblocks">✕</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section simulate-cta-section">
+      <button id="btn-simulate" class="btn-simulate">
+        <span class="sim-icon">▶</span>
+        <span id="btn-simulate-text">SIMULATE LIVE ROUTING</span>
+      </button>
+    </div>
+
+    <!-- Live Fleet & Hospital Telemetry Tabs -->
+    <div class="sidebar-section fleet-list-section">
+      <div class="tabs-header">
+        <button class="tab-btn active" id="tab-btn-ambulances">🚑 Active Fleet</button>
+        <button class="tab-btn" id="tab-btn-hospitals">🏥 8 NHS Hospitals</button>
+        <button class="tab-btn" id="tab-btn-events">📡 AI Log</button>
+      </div>
+      <div id="sidebar-list-container" class="sidebar-list-container">
+        <!-- Populated dynamically by app.js -->
+      </div>
+    </div>
+  </aside>
+
+  <aside id="inspector-drawer" class="inspector-drawer hidden">
+    <div class="inspector-header">
+      <h3 id="inspector-title">Inspector</h3>
+      <button id="btn-close-inspector" class="btn-icon-close">✕</button>
+    </div>
+    <div id="inspector-body" class="inspector-body"></div>
+  </aside>
+
+  <div id="impact-modal" class="impact-modal-backdrop hidden">
+    <div class="impact-modal-card">
+      <button id="btn-close-impact" class="impact-close-btn">✕</button>
+
+      <div class="impact-top-tag">IBM Z DATATHON 2026 · CLINICAL &amp; LOGISTICAL IMPACT REPORT</div>
+      <h2 class="impact-headline">Projected Annual Severe Harm Reduction</h2>
+      <p class="impact-subheadline">
+        Anchored to the Association of Ambulance Chief Executives (AACE 2025) national baseline of
+        <strong>44,000 annual severe patient harm cases</strong> caused by 30-minute handover delays.
+      </p>
+
+      <div class="impact-hero-banner">
+        <div class="hero-metric-box">
+          <span class="hero-metric-label">POTENTIAL SEVERE COMPLICATIONS PREVENTED / YEAR</span>
+          <div class="hero-neon-number" id="impact-prevented-num">32,267</div>
+          <div class="hero-reduction-pill" id="impact-reduction-pct">73.3% Reduction vs. 30-Min National Baseline</div>
+        </div>
+      </div>
+
+      <div class="impact-comparison-grid">
+        <div class="comp-card comp-baseline">
+          <div class="comp-card-header">🇬🇧 UK National Baseline (No Optimization)</div>
+          <div class="comp-stat-row">
+            <span>Avg Handover Delay:</span>
+            <strong class="mono">30.0 min</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Annual Severe Harm Cases:</span>
+            <strong class="mono danger-text">44,000 / yr</strong>
+          </div>
+        </div>
+
+        <div class="comp-card comp-nearest">
+          <div class="comp-card-header">📍 Naive "Nearest Hospital" (Stampede)</div>
+          <div class="comp-stat-row">
+            <span>Effective Handover Wait:</span>
+            <strong class="mono" id="comp-nearest-wait">24.5 min</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Projected Severe Cases:</span>
+            <strong class="mono warn-text" id="comp-nearest-cases">35,933 / yr</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Corridor Care Overflows:</span>
+            <strong class="mono warn-text" id="comp-nearest-overflows">3 patients</strong>
+          </div>
+        </div>
+
+        <div class="comp-card comp-triage">
+          <div class="comp-card-header">🧠 TRIAGE AI (Hungarian Joint Routing)</div>
+          <div class="comp-stat-row">
+            <span>Effective Handover Wait:</span>
+            <strong class="mono neon-text" id="comp-triage-wait">8.2 min</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Projected Severe Cases:</span>
+            <strong class="mono neon-text" id="comp-triage-cases">12,027 / yr</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Corridor Care Overflows:</span>
+            <strong class="mono neon-text" id="comp-triage-overflows">0 patients</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="impact-actions-footer">
+        <button id="btn-replay-triage" class="btn-modal-primary">
+          🔄 Run Again with TRIAGE AI
+        </button>
+        <button id="btn-replay-nearest" class="btn-modal-secondary">
+          ⚖️ Compare Run with Naive NEAREST Policy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mandatory Footer Disclaimer per CONTEXT.md Section 8 -->
+  <footer class="app-footer">
+    <span>Simulation with synthetic data. Not medical software.</span>
+    <span class="footer-sep">·</span>
+    <span>Map data © OpenStreetMap contributors, © CARTO</span>
+    <span class="footer-sep">·</span>
+    <span>Powered by IBM LinuxONE (s390x) + Scikit-Learn + Scipy + DeepSeek</span>
+  </footer>
+
+  <!-- Leaflet 1.9.4 JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- Main TRIAGE Frontend Application Logic -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
