@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRIAGE — Real-Time AI Ambulance Guidance Engine | IBM Z Datathon 2026</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="landing-overlay" class="landing-overlay">
+    <div class="landing-card">
+      <div class="landing-badge-row">
+        <span class="ibm-badge">IBM Z / LinuxONE (s390x)</span>
+        <span class="theme-badge">Real-Time AI for Critical Decisions</span>
+      </div>
+
+      <h1 class="landing-title">TRIAGE</h1>
+      <p class="landing-subtitle" id="hero-type-subtitle"></p>
+
+      <!-- Sequential Typewriter Story Lines: Each line types out smoothly one after another -->
+      <div class="landing-story-lines">
+        <p class="story-line hidden-line" id="hero-type-line-1"></p>
+        <p class="story-line hidden-line" id="hero-type-line-2"></p>
+        <p class="story-line hidden-line" id="hero-type-line-3"></p>
+      </div>
+
+      <!-- Three AI Pillars: Revealed sequentially as the typewriter story finishes -->
+      <div class="landing-pillars hidden-block" id="hero-pillars-block">
+        <div class="pillar-box">
+          <span class="pillar-role">1. PREDICT (LINUXONE ML)</span>
+          <strong>HistGradientBoosting AI</strong>
+          <span>Scores NEWS2 vitals severity S₀ &amp; live deterioration rate (+pts/min)</span>
+        </div>
+        <div class="pillar-box">
+          <span class="pillar-role">2. DECIDE (JOINT ROUTING)</span>
+          <strong>Hungarian Anti-Stampede</strong>
+          <span>Jointly optimizes 5–10 parallel ambulances across 8 Manchester NHS hospitals</span>
+        </div>
+        <div class="pillar-box">
+          <span class="pillar-role">3. COMMUNICATE (GEN AI)</span>
+          <strong>DeepSeek Pre-Alert</strong>
+          <span>Streams 40-word reception prep notes ahead of arrival with zero hallucinated numbers</span>
+        </div>
+      </div>
+
+      <div class="landing-cta-group hidden-block" id="hero-cta-block">
+        <button id="btn-launch-tour" class="btn-launch">
+          <span>🎯 Launch with Interactive Judge Tour</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+        <button id="btn-launch-direct" class="btn-launch-secondary">
+          Skip Tour &amp; Enter Sandbox Directly
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Floating High-Visibility Banner shown whenever Roadblock Mode is active -->
+  <div id="roadblock-map-banner" class="roadblock-map-banner hidden">
+    <div class="rb-banner-pulse">🚧</div>
+    <div class="rb-banner-text">
+      <strong>ROADBLOCK MODE ACTIVE:</strong> Move your mouse onto the Manchester map and <u>CLICK directly on any glowing ambulance route line</u> to drop a roadblock and watch the AI detour around it!
+    </div>
+    <button id="btn-cancel-rb-banner" class="rb-banner-cancel">Cancel ✕</button>
+  </div>
+
+  <header class="top-hud-bar" id="top-hud-bar">
+    <div class="brand-cluster">
+      <div class="pulse-dot"></div>
+      <div>
+        <div class="brand-name">TRIAGE <span class="brand-tag">MANCHESTER NHS DISPATCH</span></div>
+        <div class="brand-arch" id="hud-arch-label">IBM LinuxONE · CSR Backwards Dijkstra · Hungarian Solver</div>
+      </div>
+    </div>
+
+    <div class="telemetry-pills" id="hud-telemetry-pills">
+      <div class="telemetry-pill" title="Simulated elapsed emergency time (mm:ss)">
+        <span class="t-label">SIM CLOCK</span>
+        <span class="t-value mono" id="hud-sim-clock">00:00</span>
+      </div>
+      <div class="telemetry-pill" title="Ambulances currently driving on Manchester streets">
+        <span class="t-label">EN ROUTE</span>
+        <span class="t-value mono" id="hud-enroute-count">0</span>
+      </div>
+      <div class="telemetry-pill" title="Ambulances that have reached their assigned hospital">
+        <span class="t-label">QUEUED / ARRIVED</span>
+        <span class="t-value mono" id="hud-arrived-count">0</span>
+      </div>
+      <div class="telemetry-pill highlight-diversion" title="Live mid-journey AI hospital redirections">
+        <span class="t-label">AI DIVERSIONS</span>
+        <span class="t-value mono" id="hud-diversion-count">0</span>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btn-start-tour" class="btn-tour-trigger" title="Replay Interactive Guided Tour">
+        🎯 Guided Tour
+      </button>
+      <button id="btn-open-impact" class="btn-impact-Quick">
+        <span>⚡ 44,000 Impact Calculator</span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="control-sidebar" id="control-sidebar">
+    <div class="sidebar-section" id="tour-section-spawner">
+      <div class="section-header">
+        <span class="section-step">01</span>
+        <h2>FLEET WAVE SPAWNER</h2>
+      </div>
+      <p class="section-hint">Spawn simultaneous 999 emergency calls across Greater Manchester:</p>
+      <div class="btn-grid-2">
+        <button id="btn-spawn-5" class="btn-glass active-spawn" data-count="5">
+          <span class="btn-big-num">5</span>
+          <span class="btn-sub-text">Ambulances</span>
+        </button>
+        <button id="btn-spawn-10" class="btn-glass" data-count="10">
+          <span class="btn-big-num">10</span>
+          <span class="btn-sub-text">Ambulances (Surge)</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="tour-section-policy">
+      <div class="section-header">
+        <span class="section-step">02</span>
+        <h2>ROUTING POLICY BRAIN</h2>
+      </div>
+      <div class="policy-toggle-group" role="group" aria-label="Routing Policy Toggle">
+        <button id="btn-policy-triage" class="policy-btn active" data-policy="TRIAGE">
+          <div class="policy-title">🧠 TRIAGE AI</div>
+          <div class="policy-desc">Joint Anti-Stampede</div>
+        </button>
+        <button id="btn-policy-nearest" class="policy-btn" data-policy="NEAREST">
+          <div class="policy-title">📍 NEAREST</div>
+          <div class="policy-desc">Naive Closest ED</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="tour-section-traffic">
+      <div class="section-header">
+        <span class="section-step">03</span>
+        <h2>TIME OF DAY &amp; TRAFFIC</h2>
+      </div>
+      <div class="traffic-preset-row">
+        <button class="traffic-chip active" data-level="off_peak" data-hour="20.37">🌙 8:22 PM Quiet</button>
+        <button class="traffic-chip" data-level="normal" data-hour="10.0">☀️ 10:00 AM Busy</button>
+        <button class="traffic-chip" data-level="rush_hour" data-hour="8.5">🚨 8:30 AM Rush</button>
+      </div>
+
+      <div class="speed-row">
+        <span class="speed-label">Sim Speed:</span>
+        <div class="speed-btns">
+          <button class="speed-chip" data-speed="5">5x</button>
+          <button class="speed-chip active" data-speed="15">15x (Demo)</button>
+          <button class="speed-chip" data-speed="30">30x (Fast)</button>
+        </div>
+      </div>
+
+      <div class="roadblock-row" id="tour-section-roadblock">
+        <button id="btn-roadblock-mode" class="btn-roadblock">
+          🚧 Drop Live Roadblock on Map
+        </button>
+        <button id="btn-clear-roadblocks" class="btn-clear-rb" title="Clear All Roadblocks">✕</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section simulate-cta-section" id="tour-section-simulate">
+      <button id="btn-simulate" class="btn-simulate">
+        <span class="sim-icon">▶</span>
+        <span id="btn-simulate-text">SIMULATE LIVE ROUTING</span>
+      </button>
+    </div>
+
+    <!-- Live Fleet & Hospital Telemetry Tabs -->
+    <div class="sidebar-section fleet-list-section" id="tour-section-fleet">
+      <div class="tabs-header">
+        <button class="tab-btn active" id="tab-btn-ambulances">🚑 Active Fleet</button>
+        <button class="tab-btn" id="tab-btn-hospitals">🏥 8 NHS Hospitals</button>
+        <button class="tab-btn" id="tab-btn-events">📡 AI Log</button>
+      </div>
+      <div id="sidebar-list-container" class="sidebar-list-container"></div>
+    </div>
+  </aside>
+
+  <aside id="inspector-drawer" class="inspector-drawer hidden">
+    <div class="inspector-header">
+      <h3 id="inspector-title">Inspector</h3>
+      <button id="btn-close-inspector" class="btn-icon-close">✕</button>
+    </div>
+    <div id="inspector-body" class="inspector-body"></div>
+  </aside>
+
+  <div id="impact-modal" class="impact-modal-backdrop hidden">
+    <div class="impact-modal-card">
+      <button id="btn-close-impact" class="impact-close-btn">✕</button>
+
+      <!-- Stage 1: Header Context (Typed out first) -->
+      <div class="impact-stage" id="impact-stage-1">
+        <div class="impact-top-tag">IBM Z DATATHON 2026 · CLINICAL &amp; LOGISTICAL IMPACT REPORT</div>
+        <h2 class="impact-headline" id="impact-type-headline"></h2>
+        <p class="impact-subheadline" id="impact-type-subheadline"></p>
+      </div>
+
+      <!-- Stage 2, 3, 4: Chronological Cards (Baseline -> Naive Nearest -> TRIAGE AI) -->
+      <div class="impact-comparison-grid">
+        <!-- Step 1 Card: UK Baseline -->
+        <div class="comp-card comp-baseline impact-stage" id="impact-stage-2">
+          <div class="comp-step-badge">STEP 01 · NATIONAL PROBLEM</div>
+          <div class="comp-card-header" id="impact-type-card1-title"></div>
+          <div class="comp-stat-row">
+            <span>Avg Handover Delay:</span>
+            <strong class="mono">30.0 min</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Annual Severe Harm:</span>
+            <strong class="mono danger-text">44,000 / yr</strong>
+          </div>
+          <p class="comp-narrative" id="impact-type-card1-desc"></p>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill bar-danger" id="bar-baseline" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Step 2 Card: Naive Nearest -->
+        <div class="comp-card comp-nearest impact-stage" id="impact-stage-3">
+          <div class="comp-step-badge">STEP 02 · WITHOUT JOINT AI</div>
+          <div class="comp-card-header" id="impact-type-card2-title"></div>
+          <div class="comp-stat-row">
+            <span>Effective Handover Wait:</span>
+            <strong class="mono warn-text" id="comp-nearest-wait">0.0 min</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Projected Severe Cases:</span>
+            <strong class="mono warn-text" id="comp-nearest-cases">0 / yr</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Corridor Care Overflows:</span>
+            <strong class="mono warn-text" id="comp-nearest-overflows">0 patients</strong>
+          </div>
+          <p class="comp-narrative" id="impact-type-card2-desc"></p>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill bar-warn" id="bar-nearest" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Step 3 Card: TRIAGE AI -->
+        <div class="comp-card comp-triage impact-stage" id="impact-stage-4">
+          <div class="comp-step-badge">STEP 03 · WITH TRIAGE AI</div>
+          <div class="comp-card-header" id="impact-type-card3-title"></div>
+          <div class="comp-stat-row">
+            <span>Effective Handover Wait:</span>
+            <strong class="mono neon-text" id="comp-triage-wait">0.0 min</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Projected Severe Cases:</span>
+            <strong class="mono neon-text" id="comp-triage-cases">0 / yr</strong>
+          </div>
+          <div class="comp-stat-row">
+            <span>Corridor Care Overflows:</span>
+            <strong class="mono neon-text" id="comp-triage-overflows">0 patients</strong>
+          </div>
+          <p class="comp-narrative" id="impact-type-card3-desc"></p>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill bar-neon" id="bar-triage" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 5: The Grand Finale Climax (Typed & Counted Up Last!) -->
+      <div class="impact-hero-banner impact-stage" id="impact-stage-5">
+        <div class="hero-metric-box">
+          <span class="hero-metric-label" id="impact-type-verdict-label"></span>
+          <div class="hero-neon-number" id="impact-prevented-num">0</div>
+          <div class="hero-reduction-pill" id="impact-reduction-pct"></div>
+        </div>
+      </div>
+
+      <!-- Stage 6: Action Buttons -->
+      <div class="impact-actions-footer impact-stage" id="impact-stage-6">
+        <button id="btn-replay-triage" class="btn-modal-primary">
+          🔄 Run Again with TRIAGE AI
+        </button>
+        <button id="btn-replay-nearest" class="btn-modal-secondary">
+          ⚖️ Compare Run with Naive NEAREST Policy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="onboarding-overlay" class="onboarding-overlay hidden">
+    <div id="spotlight-hole" class="spotlight-hole"></div>
+
+    <div id="tour-tooltip" class="tour-tooltip">
+      <div class="tour-step-header">
+        <span class="tour-step-badge" id="tour-step-badge">STEP 1 OF 8</span>
+        <button id="btn-tour-skip" class="tour-skip-btn">Skip Tour ✕</button>
+      </div>
+      <h3 class="tour-title" id="tour-title"></h3>
+      <p class="tour-body" id="tour-body"></p>
+      <div class="tour-action-prompt" id="tour-action-prompt"></div>
+      <div class="tour-footer">
+        <button id="btn-tour-prev" class="btn-tour-nav">← Back</button>
+        <div class="tour-dots" id="tour-dots"></div>
+        <button id="btn-tour-next" class="btn-tour-nav btn-tour-primary">Next Step →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <span>Simulation with synthetic data. Not medical software.</span>
+    <span class="footer-sep">·</span>
+    <span>Map data © OpenStreetMap contributors</span>
+    <span class="footer-sep">·</span>
+    <span>Powered by IBM LinuxONE (s390x) + Scikit-Learn + Scipy + DeepSeek</span>
+  </footer>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
