@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TRIAGE — Uber-Dark Glassmorphism UI + Staggered Animations + Spotlight Tour
+   TRIAGE — Uber-Dark Glassmorphism UI + Smooth Typewriter Cursor + Spotlight Tour
    Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
    frontend/css/style.css
    ========================================================================== */
@@ -7,8 +7,8 @@
 /* STREAMING_CHUNK:Configuring dark-mode design tokens and global resets... */
 :root {
   --bg-dark: #121212;
-  --bg-panel: rgba(18, 20, 26, 0.86);
-  --bg-panel-elevated: rgba(24, 28, 38, 0.95);
+  --bg-panel: rgba(18, 20, 26, 0.88);
+  --bg-panel-elevated: rgba(24, 28, 38, 0.96);
   --border-subtle: rgba(255, 255, 255, 0.11);
   --border-bright: rgba(0, 229, 255, 0.48);
   --text-main: #f3f6fa;
@@ -42,7 +42,46 @@ body {
   font-family: var(--font-mono);
 }
 
-/* STREAMING_CHUNK:Styling the full-screen dark map canvas and Uber-Night street tiles... */
+/* STREAMING_CHUNK:Styling the blinking neon Typewriter cursor and reveal blocks... */
+.typewriter-cursor::after {
+  content: "▋";
+  display: inline-block;
+  margin-left: 3px;
+  color: var(--neon-cyan);
+  font-weight: 400;
+  animation: cursorBlink 0.65s steps(2, start) infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hidden-line {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.hidden-line.line-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hidden-block {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+  pointer-events: none;
+}
+
+.hidden-block.block-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* STREAMING_CHUNK:Styling the full-screen dark map canvas and Roadblock Crosshair mode... */
 #map {
   position: absolute;
   inset: 0;
@@ -50,6 +89,12 @@ body {
   height: 100vh;
   z-index: 1;
   background: #0b0e14;
+}
+
+/* When Roadblock Mode is active, turn the map cursor into a bright target crosshair! */
+#map.roadblock-cursor-active,
+#map.roadblock-cursor-active .leaflet-interactive {
+  cursor: crosshair !important;
 }
 
 .leaflet-tile-pane {
@@ -70,7 +115,56 @@ body {
   border-bottom: 1px solid var(--border-subtle) !important;
 }
 
-/* STREAMING_CHUNK:Animating the Staggered Line-by-Line Hero Landing Overlay... */
+/* Floating High-Visibility Roadblock Instruction Banner on top of the Map */
+.roadblock-map-banner {
+  position: fixed;
+  top: 88px;
+  left: 382px;
+  right: 20px;
+  z-index: 2300;
+  background: linear-gradient(90deg, rgba(255, 59, 92, 0.95), rgba(190, 18, 60, 0.95));
+  border: 2px solid #fda4af;
+  border-radius: 14px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #ffffff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(255, 59, 92, 0.65);
+  animation: bannerPulse 1.6s infinite alternate;
+}
+
+.roadblock-map-banner.hidden {
+  display: none;
+}
+
+@keyframes bannerPulse {
+  0% { transform: translateY(0); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 59, 92, 0.5); }
+  100% { transform: translateY(2px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 38px rgba(255, 59, 92, 0.9); }
+}
+
+.rb-banner-pulse {
+  font-size: 24px;
+}
+
+.rb-banner-text {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.rb-banner-cancel {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* STREAMING_CHUNK:Styling the Hero Landing Overlay... */
 .landing-overlay {
   position: fixed;
   inset: 0;
@@ -96,44 +190,16 @@ body {
   background: rgba(16, 19, 27, 0.94);
   border: 1px solid rgba(0, 229, 255, 0.35);
   border-radius: 26px;
-  padding: 40px 44px;
+  padding: 38px 44px;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.8), 0 0 45px rgba(0, 229, 255, 0.14);
   text-align: center;
 }
-
-/* Keyframes for smooth line-by-line chronological reveal */
-@keyframes lineRevealUp {
-  0% {
-    opacity: 0;
-    transform: translateY(22px) scale(0.98);
-    filter: blur(4px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-.hero-seq {
-  opacity: 0;
-  animation: lineRevealUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.hero-seq-1 { animation-delay: 0.15s; }
-.hero-seq-2 { animation-delay: 0.55s; }
-.hero-seq-3 { animation-delay: 1.05s; }
-.hero-seq-4 { animation-delay: 1.75s; }
-.hero-seq-5 { animation-delay: 2.75s; }
-.hero-seq-6 { animation-delay: 3.75s; }
-.hero-seq-7 { animation-delay: 4.75s; }
-.hero-seq-8 { animation-delay: 5.55s; }
 
 .landing-badge-row {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
@@ -160,7 +226,7 @@ body {
 }
 
 .landing-title {
-  font-size: 58px;
+  font-size: 56px;
   font-weight: 900;
   letter-spacing: -0.03em;
   background: linear-gradient(90deg, #ffffff, #00e5ff, #00f59b);
@@ -173,16 +239,18 @@ body {
   font-size: 17px;
   font-weight: 600;
   color: #cbd5e1;
-  margin-bottom: 20px;
+  min-height: 26px;
+  margin-bottom: 18px;
 }
 
 .landing-story-lines {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 720px;
-  margin: 0 auto 24px;
+  max-width: 730px;
+  margin: 0 auto 22px;
   text-align: left;
+  min-height: 158px;
 }
 
 .story-line {
@@ -203,7 +271,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin-bottom: 28px;
+  margin-bottom: 26px;
   text-align: left;
 }
 
@@ -211,7 +279,7 @@ body {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  padding: 15px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -343,6 +411,8 @@ body {
 .telemetry-pills {
   display: flex;
   gap: 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
 .telemetry-pill {
@@ -446,15 +516,13 @@ body {
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, background 0.3s ease;
 }
 
-/* Applied automatically to whichever UI control the Onboarding Tour is spotlighting */
 .tour-active-target {
   position: relative;
   z-index: 2100 !important;
-  transform: scale(1.03);
+  transform: scale(1.02);
   box-shadow: 0 0 0 2px var(--neon-cyan), 0 0 30px rgba(0, 229, 255, 0.45) !important;
   background: rgba(16, 22, 34, 0.96) !important;
-  padding: 8px;
-  margin: -8px;
+  border-radius: 12px;
 }
 
 .section-header {
@@ -621,20 +689,23 @@ body {
 
 .btn-roadblock {
   flex: 1;
-  background: rgba(255, 59, 92, 0.1);
-  border: 1px dashed rgba(255, 59, 92, 0.45);
+  background: rgba(255, 59, 92, 0.12);
+  border: 1px dashed rgba(255, 59, 92, 0.55);
   color: #fda4af;
   border-radius: 8px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-roadblock.active {
-  background: rgba(255, 59, 92, 0.28);
+  background: rgba(255, 59, 92, 0.35);
   border-style: solid;
+  border-color: #ff3b5c;
   color: #fff;
+  box-shadow: 0 0 18px rgba(255, 59, 92, 0.5);
 }
 
 .btn-clear-rb {
@@ -944,12 +1015,12 @@ body {
   margin-bottom: 4px;
 }
 
-/* STREAMING_CHUNK:Styling the Chronological Step-by-Step 44,000 Impact Calculator Modal... */
+/* STREAMING_CHUNK:Styling the Typewriter Chronological 44,000 Impact Calculator Modal... */
 .impact-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 2400;
-  background: rgba(6, 8, 12, 0.88);
+  background: rgba(6, 8, 12, 0.90);
   backdrop-filter: blur(18px);
   display: flex;
   align-items: center;
@@ -963,26 +1034,25 @@ body {
 
 .impact-modal-card {
   position: relative;
-  max-width: 920px;
+  max-width: 940px;
   width: 100%;
   background: linear-gradient(180deg, rgba(20, 24, 34, 0.98) 0%, rgba(12, 15, 22, 0.98) 100%);
   border: 1px solid rgba(0, 245, 155, 0.45);
   border-radius: 26px;
-  padding: 34px 40px;
+  padding: 32px 38px;
   box-shadow: 0 30px 100px rgba(0, 0, 0, 0.85), 0 0 60px rgba(0, 245, 155, 0.16);
   text-align: center;
 }
 
-/* Each stage starts hidden and animates in chronologically when triggered */
 .impact-stage {
   opacity: 0;
-  transform: translateY(20px) scale(0.98);
-  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(16px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
 }
 
 .impact-stage.stage-visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .impact-close-btn {
@@ -1008,17 +1078,19 @@ body {
 }
 
 .impact-headline {
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 900;
   letter-spacing: -0.02em;
+  min-height: 38px;
   margin-bottom: 6px;
 }
 
 .impact-subheadline {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-muted);
-  max-width: 680px;
-  margin: 0 auto 22px;
+  max-width: 720px;
+  min-height: 40px;
+  margin: 0 auto 20px;
   line-height: 1.5;
 }
 
@@ -1026,7 +1098,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
   text-align: left;
 }
 
@@ -1057,7 +1129,8 @@ body {
 .comp-card-header {
   font-size: 13px;
   font-weight: 800;
-  margin-bottom: 12px;
+  min-height: 20px;
+  margin-bottom: 10px;
   color: #fff;
 }
 
@@ -1066,7 +1139,15 @@ body {
   justify-content: space-between;
   font-size: 12px;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: 7px;
+}
+
+.comp-narrative {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin: 6px 0 10px;
+  min-height: 32px;
 }
 
 .comp-bar-track {
@@ -1076,7 +1157,6 @@ body {
   border-radius: 99px;
   overflow: hidden;
   margin-top: auto;
-  padding-top: 0;
 }
 
 .comp-bar-fill {
@@ -1097,21 +1177,23 @@ body {
   background: radial-gradient(circle at center, rgba(0, 245, 155, 0.2), rgba(0, 229, 255, 0.05));
   border: 2px solid rgba(0, 245, 155, 0.55);
   border-radius: 20px;
-  padding: 22px;
-  margin-bottom: 22px;
+  padding: 20px;
+  margin-bottom: 20px;
   box-shadow: 0 0 40px rgba(0, 245, 155, 0.18);
 }
 
 .hero-metric-label {
+  display: block;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
   color: #e2e8f0;
+  min-height: 18px;
 }
 
 .hero-neon-number {
   font-family: var(--font-mono);
-  font-size: 72px;
+  font-size: 68px;
   font-weight: 900;
   color: var(--neon-green);
   text-shadow: 0 0 38px rgba(0, 245, 155, 0.7);
@@ -1125,9 +1207,10 @@ body {
   border: 1px solid rgba(0, 245, 155, 0.5);
   color: #ffffff;
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14.5px;
   padding: 8px 22px;
   border-radius: 999px;
+  min-height: 36px;
   box-shadow: 0 0 24px rgba(0, 245, 155, 0.35);
 }
 
@@ -1159,7 +1242,7 @@ body {
   cursor: pointer;
 }
 
-/* STREAMING_CHUNK:Styling the Habit-Tracker Spotlight Cutout & Floating Story Bubble... */
+/* STREAMING_CHUNK:Styling the Habit-Tracker Spotlight Cutout & Typewriter Story Bubble... */
 .onboarding-overlay {
   position: fixed;
   inset: 0;
@@ -1171,7 +1254,6 @@ body {
   display: none;
 }
 
-/* Huge 9999px box-shadow dims the entire screen EXCEPT the exact spotlight rectangle! */
 .spotlight-hole {
   position: fixed;
   top: 100px;
@@ -1179,7 +1261,7 @@ body {
   width: 340px;
   height: 120px;
   border-radius: 16px;
-  box-shadow: 0 0 0 9999px rgba(5, 8, 14, 0.82), 0 0 32px rgba(0, 229, 255, 0.75);
+  box-shadow: 0 0 0 9999px rgba(5, 8, 14, 0.84), 0 0 32px rgba(0, 229, 255, 0.75);
   border: 2px solid var(--neon-cyan);
   transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
@@ -1189,7 +1271,7 @@ body {
   position: fixed;
   top: 100px;
   left: 390px;
-  width: 390px;
+  width: 410px;
   background: linear-gradient(180deg, rgba(18, 24, 36, 0.98) 0%, rgba(12, 16, 26, 0.98) 100%);
   border: 1px solid var(--neon-cyan);
   border-radius: 20px;
@@ -1235,6 +1317,7 @@ body {
   font-size: 18px;
   font-weight: 900;
   color: #ffffff;
+  min-height: 24px;
   margin-bottom: 8px;
 }
 
@@ -1242,6 +1325,7 @@ body {
   font-size: 13px;
   line-height: 1.6;
   color: #cbd5e1;
+  min-height: 76px;
   margin-bottom: 14px;
 }
 
@@ -1257,6 +1341,7 @@ body {
   padding: 9px 12px;
   font-size: 12px;
   font-weight: 700;
+  min-height: 36px;
   margin-bottom: 16px;
 }
 

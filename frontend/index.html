@@ -24,30 +24,23 @@
 <body>
   <div id="landing-overlay" class="landing-overlay">
     <div class="landing-card">
-      <div class="landing-badge-row hero-seq hero-seq-1">
+      <div class="landing-badge-row">
         <span class="ibm-badge">IBM Z / LinuxONE (s390x)</span>
         <span class="theme-badge">Real-Time AI for Critical Decisions</span>
       </div>
 
-      <h1 class="landing-title hero-seq hero-seq-2">TRIAGE</h1>
-      <p class="landing-subtitle hero-seq hero-seq-3">
-        Time-critical Routing &amp; Intelligent Ambulance Guidance Engine
-      </p>
+      <h1 class="landing-title">TRIAGE</h1>
+      <p class="landing-subtitle" id="hero-type-subtitle"></p>
 
-      <!-- Each narrative line animates in one after another so judges can read effortlessly -->
+      <!-- Sequential Typewriter Story Lines: Each line types out smoothly one after another -->
       <div class="landing-story-lines">
-        <p class="story-line hero-seq hero-seq-4">
-          🚨 In England, <strong>44,000 patients suffer severe harm every year</strong> due to 30+ minute ambulance handover delays.
-        </p>
-        <p class="story-line hero-seq hero-seq-5">
-          🏥 Standard navigation routes nearby 999 calls to the <em>same</em> closest hospital—creating a lethal <strong>"Hospital Stampede"</strong>.
-        </p>
-        <p class="story-line hero-seq hero-seq-6">
-          🧠 <strong>TRIAGE</strong> combines Predictive AI deterioration scoring, Hungarian joint-optimization, and DeepSeek pre-alerts to eliminate bottlenecks in real time.
-        </p>
+        <p class="story-line hidden-line" id="hero-type-line-1"></p>
+        <p class="story-line hidden-line" id="hero-type-line-2"></p>
+        <p class="story-line hidden-line" id="hero-type-line-3"></p>
       </div>
 
-      <div class="landing-pillars hero-seq hero-seq-7">
+      <!-- Three AI Pillars: Revealed sequentially as the typewriter story finishes -->
+      <div class="landing-pillars hidden-block" id="hero-pillars-block">
         <div class="pillar-box">
           <span class="pillar-role">1. PREDICT (LINUXONE ML)</span>
           <strong>HistGradientBoosting AI</strong>
@@ -65,7 +58,7 @@
         </div>
       </div>
 
-      <div class="landing-cta-group hero-seq hero-seq-8">
+      <div class="landing-cta-group hidden-block" id="hero-cta-block">
         <button id="btn-launch-tour" class="btn-launch">
           <span>🎯 Launch with Interactive Judge Tour</span>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -81,6 +74,15 @@
 
   <div id="map"></div>
 
+  <!-- Floating High-Visibility Banner shown whenever Roadblock Mode is active -->
+  <div id="roadblock-map-banner" class="roadblock-map-banner hidden">
+    <div class="rb-banner-pulse">🚧</div>
+    <div class="rb-banner-text">
+      <strong>ROADBLOCK MODE ACTIVE:</strong> Move your mouse onto the Manchester map and <u>CLICK directly on any glowing ambulance route line</u> to drop a roadblock and watch the AI detour around it!
+    </div>
+    <button id="btn-cancel-rb-banner" class="rb-banner-cancel">Cancel ✕</button>
+  </div>
+
   <header class="top-hud-bar" id="top-hud-bar">
     <div class="brand-cluster">
       <div class="pulse-dot"></div>
@@ -91,19 +93,19 @@
     </div>
 
     <div class="telemetry-pills" id="hud-telemetry-pills">
-      <div class="telemetry-pill">
+      <div class="telemetry-pill" title="Simulated elapsed emergency time (mm:ss)">
         <span class="t-label">SIM CLOCK</span>
         <span class="t-value mono" id="hud-sim-clock">00:00</span>
       </div>
-      <div class="telemetry-pill">
+      <div class="telemetry-pill" title="Ambulances currently driving on Manchester streets">
         <span class="t-label">EN ROUTE</span>
         <span class="t-value mono" id="hud-enroute-count">0</span>
       </div>
-      <div class="telemetry-pill">
+      <div class="telemetry-pill" title="Ambulances that have reached their assigned hospital">
         <span class="t-label">QUEUED / ARRIVED</span>
         <span class="t-value mono" id="hud-arrived-count">0</span>
       </div>
-      <div class="telemetry-pill highlight-diversion">
+      <div class="telemetry-pill highlight-diversion" title="Live mid-journey AI hospital redirections">
         <span class="t-label">AI DIVERSIONS</span>
         <span class="t-value mono" id="hud-diversion-count">0</span>
       </div>
@@ -179,7 +181,7 @@
         <button id="btn-roadblock-mode" class="btn-roadblock">
           🚧 Drop Live Roadblock on Map
         </button>
-        <button id="btn-clear-roadblocks" class="btn-clear-rb" title="Clear Roadblocks">✕</button>
+        <button id="btn-clear-roadblocks" class="btn-clear-rb" title="Clear All Roadblocks">✕</button>
       </div>
     </div>
 
@@ -213,14 +215,11 @@
     <div class="impact-modal-card">
       <button id="btn-close-impact" class="impact-close-btn">✕</button>
 
-      <!-- Stage 1: Header Context -->
+      <!-- Stage 1: Header Context (Typed out first) -->
       <div class="impact-stage" id="impact-stage-1">
         <div class="impact-top-tag">IBM Z DATATHON 2026 · CLINICAL &amp; LOGISTICAL IMPACT REPORT</div>
-        <h2 class="impact-headline">Chronological Impact Analysis</h2>
-        <p class="impact-subheadline">
-          Anchored to the Association of Ambulance Chief Executives (AACE) national baseline of
-          <strong>44,000 annual severe patient harm cases</strong> caused by 30-minute handover delays.
-        </p>
+        <h2 class="impact-headline" id="impact-type-headline"></h2>
+        <p class="impact-subheadline" id="impact-type-subheadline"></p>
       </div>
 
       <!-- Stage 2, 3, 4: Chronological Cards (Baseline -> Naive Nearest -> TRIAGE AI) -->
@@ -228,7 +227,7 @@
         <!-- Step 1 Card: UK Baseline -->
         <div class="comp-card comp-baseline impact-stage" id="impact-stage-2">
           <div class="comp-step-badge">STEP 01 · NATIONAL PROBLEM</div>
-          <div class="comp-card-header">🇬🇧 UK 30-Min Delay Baseline</div>
+          <div class="comp-card-header" id="impact-type-card1-title"></div>
           <div class="comp-stat-row">
             <span>Avg Handover Delay:</span>
             <strong class="mono">30.0 min</strong>
@@ -237,6 +236,7 @@
             <span>Annual Severe Harm:</span>
             <strong class="mono danger-text">44,000 / yr</strong>
           </div>
+          <p class="comp-narrative" id="impact-type-card1-desc"></p>
           <div class="comp-bar-track">
             <div class="comp-bar-fill bar-danger" id="bar-baseline" style="width: 100%"></div>
           </div>
@@ -245,7 +245,7 @@
         <!-- Step 2 Card: Naive Nearest -->
         <div class="comp-card comp-nearest impact-stage" id="impact-stage-3">
           <div class="comp-step-badge">STEP 02 · WITHOUT JOINT AI</div>
-          <div class="comp-card-header">📍 Naive "Nearest ED" (Stampede)</div>
+          <div class="comp-card-header" id="impact-type-card2-title"></div>
           <div class="comp-stat-row">
             <span>Effective Handover Wait:</span>
             <strong class="mono warn-text" id="comp-nearest-wait">0.0 min</strong>
@@ -258,6 +258,7 @@
             <span>Corridor Care Overflows:</span>
             <strong class="mono warn-text" id="comp-nearest-overflows">0 patients</strong>
           </div>
+          <p class="comp-narrative" id="impact-type-card2-desc"></p>
           <div class="comp-bar-track">
             <div class="comp-bar-fill bar-warn" id="bar-nearest" style="width: 0%"></div>
           </div>
@@ -266,7 +267,7 @@
         <!-- Step 3 Card: TRIAGE AI -->
         <div class="comp-card comp-triage impact-stage" id="impact-stage-4">
           <div class="comp-step-badge">STEP 03 · WITH TRIAGE AI</div>
-          <div class="comp-card-header">🧠 TRIAGE AI (Hungarian Joint)</div>
+          <div class="comp-card-header" id="impact-type-card3-title"></div>
           <div class="comp-stat-row">
             <span>Effective Handover Wait:</span>
             <strong class="mono neon-text" id="comp-triage-wait">0.0 min</strong>
@@ -279,20 +280,19 @@
             <span>Corridor Care Overflows:</span>
             <strong class="mono neon-text" id="comp-triage-overflows">0 patients</strong>
           </div>
+          <p class="comp-narrative" id="impact-type-card3-desc"></p>
           <div class="comp-bar-track">
             <div class="comp-bar-fill bar-neon" id="bar-triage" style="width: 0%"></div>
           </div>
         </div>
       </div>
 
-      <!-- Stage 5: The Grand Finale Climax (Revealed Last!) -->
+      <!-- Stage 5: The Grand Finale Climax (Typed & Counted Up Last!) -->
       <div class="impact-hero-banner impact-stage" id="impact-stage-5">
         <div class="hero-metric-box">
-          <span class="hero-metric-label">FINAL VERDICT · POTENTIAL SEVERE COMPLICATIONS PREVENTED ANNUALLY</span>
+          <span class="hero-metric-label" id="impact-type-verdict-label"></span>
           <div class="hero-neon-number" id="impact-prevented-num">0</div>
-          <div class="hero-reduction-pill" id="impact-reduction-pct">
-            0.0% Reduction in Potential Severe Harm &amp; Deaths vs. 30-Min Baseline
-          </div>
+          <div class="hero-reduction-pill" id="impact-reduction-pct"></div>
         </div>
       </div>
 
@@ -309,22 +309,16 @@
   </div>
 
   <div id="onboarding-overlay" class="onboarding-overlay hidden">
-    <!-- Spotlight cutout frame that smoothly moves & zooms around the active button/panel -->
     <div id="spotlight-hole" class="spotlight-hole"></div>
 
-    <!-- Floating Story & Instruction Bubble -->
     <div id="tour-tooltip" class="tour-tooltip">
       <div class="tour-step-header">
-        <span class="tour-step-badge" id="tour-step-badge">STEP 1 OF 7</span>
+        <span class="tour-step-badge" id="tour-step-badge">STEP 1 OF 8</span>
         <button id="btn-tour-skip" class="tour-skip-btn">Skip Tour ✕</button>
       </div>
-      <h3 class="tour-title" id="tour-title">Welcome to TRIAGE Dispatch</h3>
-      <p class="tour-body" id="tour-body">
-        Let's walk through how our AI prevents hospital stampedes across Greater Manchester.
-      </p>
-      <div class="tour-action-prompt" id="tour-action-prompt">
-        👆 Click the highlighted control to see it in action!
-      </div>
+      <h3 class="tour-title" id="tour-title"></h3>
+      <p class="tour-body" id="tour-body"></p>
+      <div class="tour-action-prompt" id="tour-action-prompt"></div>
       <div class="tour-footer">
         <button id="btn-tour-prev" class="btn-tour-nav">← Back</button>
         <div class="tour-dots" id="tour-dots"></div>

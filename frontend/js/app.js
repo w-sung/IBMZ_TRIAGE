@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * TRIAGE — Uber-Like 2D Leaflet Map + Interactive Spotlight Judge Tour
- *          + Chronological Animated 44,000 Impact Calculator
+ * TRIAGE — Uber-Like 2D Leaflet Map + Natural Human-Reading Typewriter Engine
+ *          + 8-Step Interactive Spotlight Judge Tour + Chronological 44,000 Report
  * Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
  * frontend/js/app.js
  * ============================================================================
@@ -35,7 +35,6 @@ const map = L.map("map", {
 
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
-// Official OpenStreetMap tile server with custom Uber-Night dark filter in style.css
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
 }).addTo(map);
@@ -66,25 +65,171 @@ function formatSecondsToMMSS(totalSeconds) {
 }
 
 /**
- * Smoothly counts a number up from 0 to targetValue over durationMs
- * so judges watch the metrics climb chronologically!
+ * HTML-Aware Smooth Typewriter Engine (Tuned to Comfortable Eye-Reading Speed!)
+ * - Advances 1 character at a time (around ~30ms per character, ~33 chars/sec,
+ *   which is slightly brisker than average human reading speed so eyes can read
+ *   word-by-word comfortably without waiting forever).
+ * - Adds a subtle, natural pause after punctuation (, . — :) so sentences flow naturally.
+ * - Instantly skips over HTML tags (<strong...>, <em>, etc.) so markup never breaks.
+ */
+const activeTypewriters = new Map();
+
+function sleepMs(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function typewriteHTML(elementOrId, htmlString, charDelayMs = 30) {
+  return new Promise((resolve) => {
+    const el =
+      typeof elementOrId === "string"
+        ? document.getElementById(elementOrId)
+        : elementOrId;
+    if (!el) {
+      resolve();
+      return;
+    }
+
+    if (activeTypewriters.has(el)) {
+      clearTimeout(activeTypewriters.get(el));
+      activeTypewriters.delete(el);
+    }
+
+    el.innerHTML = "";
+    el.classList.add("typewriter-cursor");
+
+    let i = 0;
+    const len = htmlString.length;
+
+    function step() {
+      if (i >= len) {
+        el.innerHTML = htmlString;
+        el.classList.remove("typewriter-cursor");
+        activeTypewriters.delete(el);
+        resolve();
+        return;
+      }
+
+      // Advance exactly 1 visible character per step for smooth word-by-word reading
+      let lastVisibleChar = "";
+      while (i < len) {
+        if (htmlString[i] === "<") {
+          const closeIdx = htmlString.indexOf(">", i);
+          if (closeIdx !== -1) {
+            i = closeIdx + 1;
+            continue;
+          }
+        }
+        if (htmlString[i] === "&") {
+          const semiIdx = htmlString.indexOf(";", i);
+          if (semiIdx !== -1 && semiIdx - i < 8) {
+            i = semiIdx + 1;
+            lastVisibleChar = "&";
+            break;
+          }
+        }
+        lastVisibleChar = htmlString[i];
+        i++;
+        break;
+      }
+
+      el.innerHTML = htmlString.slice(0, i);
+
+      // Subtle natural cadence pause on punctuation so the eye can absorb each clause
+      let nextDelay = charDelayMs;
+      if (lastVisibleChar === "." || lastVisibleChar === "!") {
+        nextDelay = charDelayMs * 4.5;
+      } else if (
+        lastVisibleChar === "," ||
+        lastVisibleChar === ":" ||
+        lastVisibleChar === "—"
+      ) {
+        nextDelay = charDelayMs * 2.5;
+      }
+
+      const timerId = setTimeout(step, nextDelay);
+      activeTypewriters.set(el, timerId);
+    }
+
+    step();
+  });
+}
+
+/**
+ * Runs the sequential typewriter animation on the Hero Landing Overlay
+ * at a comfortable reading pace, with a brief pause between lines.
+ */
+async function runHeroLandingTypewriter() {
+  const subEl = document.getElementById("hero-type-subtitle");
+  const line1 = document.getElementById("hero-type-line-1");
+  const line2 = document.getElementById("hero-type-line-2");
+  const line3 = document.getElementById("hero-type-line-3");
+  const pillars = document.getElementById("hero-pillars-block");
+  const cta = document.getElementById("hero-cta-block");
+
+  await typewriteHTML(
+    subEl,
+    "Time-critical Routing &amp; Intelligent Ambulance Guidance Engine",
+    32
+  );
+  await sleepMs(350);
+
+  line1.classList.add("line-active");
+  await typewriteHTML(
+    line1,
+    "🚨 In England, <strong>44,000 patients suffer severe harm every year</strong> due to 30+ minute ambulance handover delays.",
+    30
+  );
+  await sleepMs(450);
+
+  line2.classList.add("line-active");
+  await typewriteHTML(
+    line2,
+    "🏥 Standard navigation routes nearby 999 calls to the <em>same</em> closest hospital—creating a lethal <strong>&ldquo;Hospital Stampede&rdquo;</strong>.",
+    30
+  );
+  await sleepMs(450);
+
+  line3.classList.add("line-active");
+  await typewriteHTML(
+    line3,
+    "🧠 <strong>TRIAGE</strong> combines Predictive AI deterioration scoring, Hungarian joint-optimization, and DeepSeek pre-alerts to eliminate bottlenecks in real time.",
+    28
+  );
+  await sleepMs(350);
+
+  pillars.classList.add("block-visible");
+  setTimeout(() => {
+    cta.classList.add("block-visible");
+  }, 450);
+}
+
+/**
+ * Smoothly counts a number up from startVal to endVal over durationMs
  */
 function animateNumberValue(elementId, startVal, endVal, durationMs, formatFn) {
-  const el = document.getElementById(elementId);
-  if (!el) return;
-  const startTime = performance.now();
-
-  function step(now) {
-    const progress = Math.min(1, (now - startTime) / durationMs);
-    // Ease-out cubic curve
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = startVal + (endVal - startVal) * eased;
-    el.textContent = formatFn ? formatFn(current) : Math.round(current).toLocaleString();
-    if (progress < 1) {
-      requestAnimationFrame(step);
+  return new Promise((resolve) => {
+    const el = document.getElementById(elementId);
+    if (!el) {
+      resolve();
+      return;
     }
-  }
-  requestAnimationFrame(step);
+    const startTime = performance.now();
+
+    function step(now) {
+      const progress = Math.min(1, (now - startTime) / durationMs);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = startVal + (endVal - startVal) * eased;
+      el.textContent = formatFn
+        ? formatFn(current)
+        : Math.round(current).toLocaleString();
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
 }
 
 function getHospitalStressClass(stress) {
@@ -119,10 +264,14 @@ function createHospitalIcon(hosp) {
 
 function createAmbulanceHTML(amb, isDiverted = false) {
   const etaMin = Math.max(1, Math.round(amb.eta_s / 60));
-  const statusBadge =
-    amb.status === "EN_ROUTE"
-      ? `<span class="bubble-eta">${etaMin}m</span>`
-      : `<span class="bubble-eta">${amb.status === "HANDOVER_DONE" ? "DONE" : "QUEUED"}</span>`;
+  let statusBadge = "";
+  if (amb.status === "EN_ROUTE") {
+    statusBadge = `<span class="bubble-eta">${etaMin}m</span>`;
+  } else if (amb.status === "HANDOVER_DONE") {
+    statusBadge = `<span class="bubble-eta" style="color:#00f59b">DONE</span>`;
+  } else {
+    statusBadge = `<span class="bubble-eta" style="color:#ffb800">ARRIVED</span>`;
+  }
 
   const flashClass = isDiverted ? "diverted-flash" : "";
 
@@ -297,7 +446,7 @@ function updateMapEntities(tickData) {
         radius: rb.radius_m || 650,
         color: "#ff3b5c",
         fillColor: "#ff3b5c",
-        fillOpacity: 0.32,
+        fillOpacity: 0.35,
         weight: 2.5,
       }).addTo(map);
       roadblockCircles.set(rb.id, circle);
@@ -364,6 +513,12 @@ function renderSidebarList(tickData) {
       .map((amb) => {
         const p = amb.patient || {};
         const etaMin = Math.max(0, Math.round(amb.eta_s / 60));
+        const statusStr =
+          amb.status === "EN_ROUTE"
+            ? `ETA ${etaMin}m`
+            : amb.status === "HANDOVER_DONE"
+            ? "HANDOVER DONE"
+            : "ARRIVED AT ED";
         return `
           <div class="fleet-item-card" onclick="openInspector('ambulance', '${amb.id}')">
             <div class="fleet-row-top">
@@ -373,7 +528,7 @@ function renderSidebarList(tickData) {
             <div class="fleet-cond">${p.condition_name || "Emergency"}</div>
             <div class="fleet-row-bottom">
               <span>➔ <strong>${amb.hospital_name || amb.hospital_id}</strong></span>
-              <span class="mono">ETA ${etaMin}m · Det ${amb.deterioration.toFixed(1)}%</span>
+              <span class="mono">${statusStr} · Det ${amb.deterioration.toFixed(1)}%</span>
             </div>
           </div>
         `;
@@ -474,21 +629,21 @@ window.adjustHospitalOccupied = async function (hospId, newOccupied) {
   });
 };
 
-let impactTimeouts = [];
+let impactRunToken = 0;
 
 async function fetchAndShowImpactModal() {
   try {
-    // Clear any previous reveal timers
-    impactTimeouts.forEach((t) => clearTimeout(t));
-    impactTimeouts = [];
+    const myToken = ++impactRunToken;
 
-    // Hide all 6 stages initially so they reveal one after another
+    // Reset all 6 stages so they reveal and type out chronologically one after another
     for (let i = 1; i <= 6; i++) {
       const st = document.getElementById(`impact-stage-${i}`);
       if (st) st.classList.remove("stage-visible");
     }
     document.getElementById("bar-nearest").style.width = "0%";
     document.getElementById("bar-triage").style.width = "0%";
+    document.getElementById("impact-prevented-num").textContent = "0";
+    document.getElementById("impact-reduction-pct").textContent = "";
 
     const res = await fetch("/api/impact");
     const data = await res.json();
@@ -498,70 +653,162 @@ async function fetchAndShowImpactModal() {
     const nearestCases = Number(tc.nearest_projected_cases ?? 35933);
     const nearestOverflows = Number(tc.nearest_details?.corridor_overflows ?? 3);
 
-    const triageWait = Number(tc.triage_handover_min ?? data.triage_avg_handover_min ?? 8.2);
-    const triageCases = Number(tc.triage_projected_cases ?? data.projected_annual_severe_cases ?? 11733);
+    const triageWait = Number(
+      tc.triage_handover_min ?? data.triage_avg_handover_min ?? 8.2
+    );
+    const triageCases = Number(
+      tc.triage_projected_cases ?? data.projected_annual_severe_cases ?? 11733
+    );
     const triageOverflows = Number(tc.triage_details?.corridor_overflows ?? 0);
 
-    const preventedCases = Number(tc.triage_prevented ?? data.severe_cases_prevented ?? 32267);
-    const reductionPct = Number(tc.triage_reduction_pct ?? data.reduction_percent ?? 73.3);
+    const preventedCases = Number(
+      tc.triage_prevented ?? data.severe_cases_prevented ?? 32267
+    );
+    const reductionPct = Number(
+      tc.triage_reduction_pct ?? data.reduction_percent ?? 73.3
+    );
 
     document.getElementById("impact-modal").classList.remove("hidden");
 
-    // Stage 1 (t = 100ms): Reveal Title & AACE 44,000 Context
-    impactTimeouts.push(
-      setTimeout(() => {
-        document.getElementById("impact-stage-1").classList.add("stage-visible");
-      }, 100)
+    // STAGE 1: Type out Headline & AACE 44,000 Context at natural reading speed
+    if (myToken !== impactRunToken) return;
+    document.getElementById("impact-stage-1").classList.add("stage-visible");
+    await typewriteHTML(
+      "impact-type-headline",
+      "Chronological Clinical Impact Analysis",
+      32
     );
+    if (myToken !== impactRunToken) return;
+    await typewriteHTML(
+      "impact-type-subheadline",
+      "Anchored to the Association of Ambulance Chief Executives (AACE) national baseline of <strong>44,000 annual severe patient harm cases</strong> caused by 30-minute handover delays.",
+      26
+    );
+    await sleepMs(400);
 
-    // Stage 2 (t = 700ms): Reveal Step 01 UK National Baseline (30.0 min -> 44,000 cases)
-    impactTimeouts.push(
-      setTimeout(() => {
-        document.getElementById("impact-stage-2").classList.add("stage-visible");
-      }, 700)
+    // STAGE 2: Step 01 National Baseline Card
+    if (myToken !== impactRunToken) return;
+    document.getElementById("impact-stage-2").classList.add("stage-visible");
+    await typewriteHTML(
+      "impact-type-card1-title",
+      "🇬🇧 UK 30-Min Delay Baseline",
+      30
     );
+    if (myToken !== impactRunToken) return;
+    await typewriteHTML(
+      "impact-type-card1-desc",
+      "When ambulances queue for 30 minutes outside overcrowded EDs, 44,000 patients suffer severe harm annually.",
+      26
+    );
+    await sleepMs(400);
 
-    // Stage 3 (t = 1550ms): Reveal Step 02 Naive Nearest Hospital Stampede + count up numbers
-    impactTimeouts.push(
-      setTimeout(() => {
-        document.getElementById("impact-stage-3").classList.add("stage-visible");
-        animateNumberValue("comp-nearest-wait", 0, nearestWait, 900, (v) => `${v.toFixed(1)} min`);
-        animateNumberValue("comp-nearest-cases", 0, nearestCases, 900, (v) => `${Math.round(v).toLocaleString()} / yr`);
-        document.getElementById("comp-nearest-overflows").textContent = `${nearestOverflows} patients`;
-        document.getElementById("bar-nearest").style.width = `${Math.min(100, Math.round((nearestCases / 44000) * 100))}%`;
-      }, 1550)
+    // STAGE 3: Step 02 Naive Nearest Hospital Stampede Card
+    if (myToken !== impactRunToken) return;
+    document.getElementById("impact-stage-3").classList.add("stage-visible");
+    await typewriteHTML(
+      "impact-type-card2-title",
+      "📍 Naive &ldquo;Nearest ED&rdquo; (Stampede)",
+      30
     );
+    document.getElementById("bar-nearest").style.width = `${Math.min(
+      100,
+      Math.round((nearestCases / 44000) * 100)
+    )}%`;
+    document.getElementById(
+      "comp-nearest-overflows"
+    ).textContent = `${nearestOverflows} patients`;
+    await Promise.all([
+      animateNumberValue(
+        "comp-nearest-wait",
+        0,
+        nearestWait,
+        1000,
+        (v) => `${v.toFixed(1)} min`
+      ),
+      animateNumberValue(
+        "comp-nearest-cases",
+        0,
+        nearestCases,
+        1000,
+        (v) => `${Math.round(v).toLocaleString()} / yr`
+      ),
+    ]);
+    if (myToken !== impactRunToken) return;
+    await typewriteHTML(
+      "impact-type-card2-desc",
+      "Independent routing floods the closest hospital, creating severe corridor queues.",
+      26
+    );
+    await sleepMs(400);
 
-    // Stage 4 (t = 2550ms): Reveal Step 03 TRIAGE AI Joint Routing + count up numbers
-    impactTimeouts.push(
-      setTimeout(() => {
-        document.getElementById("impact-stage-4").classList.add("stage-visible");
-        animateNumberValue("comp-triage-wait", 0, triageWait, 900, (v) => `${v.toFixed(1)} min`);
-        animateNumberValue("comp-triage-cases", 0, triageCases, 900, (v) => `${Math.round(v).toLocaleString()} / yr`);
-        document.getElementById("comp-triage-overflows").textContent = `${triageOverflows} patients`;
-        document.getElementById("bar-triage").style.width = `${Math.min(100, Math.round((triageCases / 44000) * 100))}%`;
-      }, 2550)
+    // STAGE 4: Step 03 TRIAGE AI Joint Routing Card
+    if (myToken !== impactRunToken) return;
+    document.getElementById("impact-stage-4").classList.add("stage-visible");
+    await typewriteHTML(
+      "impact-type-card3-title",
+      "🧠 TRIAGE AI (Hungarian Joint)",
+      30
     );
+    document.getElementById("bar-triage").style.width = `${Math.min(
+      100,
+      Math.round((triageCases / 44000) * 100)
+    )}%`;
+    document.getElementById(
+      "comp-triage-overflows"
+    ).textContent = `${triageOverflows} patients`;
+    await Promise.all([
+      animateNumberValue(
+        "comp-triage-wait",
+        0,
+        triageWait,
+        1000,
+        (v) => `${v.toFixed(1)} min`
+      ),
+      animateNumberValue(
+        "comp-triage-cases",
+        0,
+        triageCases,
+        1000,
+        (v) => `${Math.round(v).toLocaleString()} / yr`
+      ),
+    ]);
+    if (myToken !== impactRunToken) return;
+    await typewriteHTML(
+      "impact-type-card3-desc",
+      "Joint optimization spreads ambulances across 8 Manchester EDs, slashing handover waits.",
+      26
+    );
+    await sleepMs(500);
 
-    // Stage 5 (t = 3600ms): THE GRAND FINALE CLIMAX — Count up Severe Cases Prevented & % Lives/Harm Saved!
-    impactTimeouts.push(
-      setTimeout(() => {
-        document.getElementById("impact-stage-5").classList.add("stage-visible");
-        animateNumberValue("impact-prevented-num", 0, preventedCases, 1400, (v) =>
-          Math.round(v).toLocaleString()
-        );
-        animateNumberValue("impact-reduction-pct", 0, reductionPct, 1400, (v) =>
-          `🏆 ${v.toFixed(1)}% Reduction in Potential Severe Harm & Deaths vs. 30-Min Baseline`
-        );
-      }, 3600)
+    // STAGE 5: THE GRAND FINALE CLIMAX — Type Verdict + Count Up Prevented Cases + Type Final % Saved!
+    if (myToken !== impactRunToken) return;
+    document.getElementById("impact-stage-5").classList.add("stage-visible");
+    await typewriteHTML(
+      "impact-type-verdict-label",
+      "FINAL VERDICT · POTENTIAL SEVERE COMPLICATIONS PREVENTED ANNUALLY",
+      30
     );
+    if (myToken !== impactRunToken) return;
+    await animateNumberValue(
+      "impact-prevented-num",
+      0,
+      preventedCases,
+      1600,
+      (v) => Math.round(v).toLocaleString()
+    );
+    if (myToken !== impactRunToken) return;
+    await typewriteHTML(
+      "impact-reduction-pct",
+      `🏆 ${reductionPct.toFixed(
+        1
+      )}% Reduction in Potential Severe Harm &amp; Deaths vs. 30-Min Baseline`,
+      32
+    );
+    await sleepMs(300);
 
-    // Stage 6 (t = 4800ms): Reveal Replay Action Buttons
-    impactTimeouts.push(
-      setTimeout(() => {
-        document.getElementById("impact-stage-6").classList.add("stage-visible");
-      }, 4800)
-    );
+    // STAGE 6: Reveal Action Buttons
+    if (myToken !== impactRunToken) return;
+    document.getElementById("impact-stage-6").classList.add("stage-visible");
   } catch (err) {
     console.error("Failed to load impact metrics:", err);
   }
@@ -569,54 +816,61 @@ async function fetchAndShowImpactModal() {
 
 const TOUR_STEPS = [
   {
+    targetId: "hud-telemetry-pills",
+    title: "1. Live Mission Telemetry Bar",
+    body: "Look at the top center bar: <strong>SIM CLOCK</strong> tracks elapsed emergency seconds, <strong>EN ROUTE</strong> shows ambulances currently driving, <strong>QUEUED / ARRIVED</strong> counts ambulances that reached a hospital, and <strong>AI DIVERSIONS</strong> counts how many times TRIAGE redirected an ambulance mid-journey to prevent a queue!",
+    prompt: "👀 Review the 4 live telemetry counters above, then click 'Next Step →'",
+    onEnter: () => {},
+  },
+  {
     targetId: "tour-section-spawner",
-    title: "1. Spawn a 999 Emergency Wave",
+    title: "2. Spawn a 999 Emergency Wave",
     body: "In real life, there is never just 1 ambulance on the road. Click <strong>10 Ambulances (Surge)</strong> right now to spawn 10 simultaneous critical patients across Greater Manchester!",
-    prompt: "👆 Try clicking '10 Ambulances (Surge)' (or click Next Step)",
+    prompt: "👆 Click '10 Ambulances (Surge)' inside the glowing box (or click Next Step)",
     onEnter: () => {},
   },
   {
     targetId: "tour-section-policy",
-    title: "2. The 'Hospital Stampede' vs. TRIAGE AI",
+    title: "3. The 'Hospital Stampede' vs. TRIAGE AI",
     body: "Click <strong>📍 NEAREST</strong> and watch the map: naive routing sends nearby ambulances to the exact same closest hospital, overloading its queue! Then click <strong>🧠 TRIAGE AI</strong> to watch our Hungarian Algorithm spread them across 8 NHS hospitals.",
     prompt: "👆 Toggle between NEAREST and TRIAGE AI to see routes switch live!",
     onEnter: () => {},
   },
   {
     targetId: "tour-section-traffic",
-    title: "3. Dynamic Time-of-Day & Rush Hour Traffic",
+    title: "4. Dynamic Time-of-Day & Rush Hour Traffic",
     body: "An emergency at <strong>8:22 PM Quiet</strong> faces very different road speeds than <strong>8:30 AM Rush Hour</strong>. Clicking these chips recalculates all 7,148 Manchester street segments via Backwards Dijkstra in under 15ms.",
     prompt: "👆 Click '10:00 AM Busy' or '8:30 AM Rush' to test live traffic!",
     onEnter: () => {},
   },
   {
     targetId: "tour-section-fleet",
-    title: "4. Predictive AI Vitals & DeepSeek Notes",
-    body: "Every ambulance carries a patient scored by our <strong>Scikit-Learn HistGradientBoosting AI</strong> on IBM LinuxONE. We just opened <strong>AMB-01</strong> on the right so you can see its live vitals and <strong>40-word DeepSeek Reception Pre-Alert</strong>!",
-    prompt: "👀 Check out the Inspector Drawer on the right (or click any ambulance card)!",
+    title: "5. Predictive AI Vitals & DeepSeek Notes",
+    body: "Every ambulance carries a patient scored by our <strong>Scikit-Learn HistGradientBoosting AI</strong> on IBM LinuxONE. Look at the <strong>Inspector Drawer on the right</strong> to see <strong>AMB-01</strong>'s live vitals and <strong>40-word DeepSeek Reception Pre-Alert</strong>!",
+    prompt: "👀 Check out the DeepSeek AI Note on the right (or click any ambulance card)!",
     onEnter: () => {
       openInspector("ambulance", "AMB-01");
     },
   },
   {
     targetId: "tour-section-roadblock",
-    title: "5. Drop a Live Roadblock on a Street Route",
-    body: "What if a crash blocks a major Manchester road while ambulances are en route? Let's test our real-time street detour engine!",
-    prompt: "👆 Click '🚧 Drop Live Roadblock on Map' — or click Next Step and we'll drop one for you!",
+    title: "6. Drop a Live Roadblock on a Street Route",
+    body: "What if a crash blocks a major Manchester road while ambulances are en route? Step A: Click the red <strong>🚧 Drop Live Roadblock on Map</strong> button. Step B: Move your mouse onto the Manchester map and <strong>click directly on any glowing route line</strong> to watch the street detour!",
+    prompt: "👆 Click '🚧 Drop Live Roadblock on Map', then click any glowing route on the map!",
     onEnter: () => {},
   },
   {
     targetId: "tour-section-simulate",
-    title: "6. Simulate Live 60FPS Ambulance Routing",
-    body: "When you press <strong>SIMULATE LIVE ROUTING</strong>, ambulances glide smoothly along real Manchester streets. Every 15 simulated seconds, TRIAGE checks if any hospital is filling up and diverts trailing ambulances mid-journey!",
-    prompt: "👆 Click '▶ SIMULATE LIVE ROUTING' to start the fleet!",
+    title: "7. Simulate Live 60FPS Ambulance Routing",
+    body: "When you press <strong>SIMULATE LIVE ROUTING</strong>, ambulances glide smoothly along real Manchester streets. As soon as all ambulances arrive at their hospitals, the 44,000 Impact Report opens automatically!",
+    prompt: "👆 Click '▶ SIMULATE LIVE ROUTING' to launch the fleet!",
     onEnter: () => {},
   },
   {
     targetId: "btn-open-impact",
-    title: "7. The 44,000 Annual Severe Harm Calculator",
-    body: "At the end of every run (or anytime you click this button), TRIAGE reveals a chronological breakdown of how many of the <strong>44,000 annual severe harm cases</strong> our algorithm prevented.",
-    prompt: "🎉 Click 'Finish & Open Impact Report' or start exploring freely!",
+    title: "8. The 44,000 Annual Severe Harm Calculator",
+    body: "At the end of every run (or anytime you click this button), TRIAGE types out a chronological breakdown of how many of the <strong>44,000 annual severe harm cases</strong> our algorithm prevented.",
+    prompt: "🎉 Click 'Finish Tour ✓' or click the '44,000 Impact Calculator' button!",
     onEnter: () => {},
   },
 ];
@@ -631,12 +885,13 @@ function startOnboardingTour() {
 function stopOnboardingTour() {
   state.tourActive = false;
   document.getElementById("onboarding-overlay").classList.add("hidden");
+  document.getElementById("spotlight-hole").style.opacity = "1";
   document
     .querySelectorAll(".tour-active-target")
     .forEach((el) => el.classList.remove("tour-active-target"));
 }
 
-function renderTourStep() {
+async function renderTourStep() {
   if (!state.tourActive) return;
   const step = TOUR_STEPS[state.tourStepIndex];
   if (!step) {
@@ -644,7 +899,6 @@ function renderTourStep() {
     return;
   }
 
-  // Remove previous highlight
   document
     .querySelectorAll(".tour-active-target")
     .forEach((el) => el.classList.remove("tour-active-target"));
@@ -652,6 +906,7 @@ function renderTourStep() {
   const targetEl = document.getElementById(step.targetId);
   const holeEl = document.getElementById("spotlight-hole");
   const tooltipEl = document.getElementById("tour-tooltip");
+  holeEl.style.opacity = "1";
 
   if (targetEl) {
     targetEl.classList.add("tour-active-target");
@@ -662,12 +917,14 @@ function renderTourStep() {
     holeEl.style.width = `${rect.width + pad * 2}px`;
     holeEl.style.height = `${rect.height + pad * 2}px`;
 
-    // Position the floating story card right next to the highlighted element
     let tooltipLeft = rect.right + 24;
-    let tooltipTop = Math.max(88, Math.min(window.innerHeight - 310, rect.top - 10));
+    let tooltipTop = Math.max(88, Math.min(window.innerHeight - 330, rect.top - 10));
 
-    if (tooltipLeft + 400 > window.innerWidth) {
-      tooltipLeft = Math.max(20, rect.left - 410);
+    if (rect.top < 80) {
+      tooltipLeft = Math.max(20, Math.min(window.innerWidth - 430, rect.left));
+      tooltipTop = rect.bottom + 18;
+    } else if (tooltipLeft + 420 > window.innerWidth) {
+      tooltipLeft = Math.max(20, rect.left - 425);
       tooltipTop = Math.max(88, rect.bottom + 18);
     }
 
@@ -678,11 +935,7 @@ function renderTourStep() {
   document.getElementById("tour-step-badge").textContent = `STEP ${
     state.tourStepIndex + 1
   } OF ${TOUR_STEPS.length}`;
-  document.getElementById("tour-title").textContent = step.title;
-  document.getElementById("tour-body").innerHTML = step.body;
-  document.getElementById("tour-action-prompt").innerHTML = step.prompt;
 
-  // Render progress dots
   const dotsContainer = document.getElementById("tour-dots");
   dotsContainer.innerHTML = TOUR_STEPS.map(
     (_, idx) => `<div class="tour-dot ${idx === state.tourStepIndex ? "active" : ""}"></div>`
@@ -698,6 +951,41 @@ function renderTourStep() {
   if (typeof step.onEnter === "function") {
     step.onEnter();
   }
+
+  // Smoothly type out the title, body, and prompt at a natural reading speed!
+  const stepSnapshot = state.tourStepIndex;
+  document.getElementById("tour-body").innerHTML = "";
+  document.getElementById("tour-action-prompt").innerHTML = "";
+
+  await typewriteHTML("tour-title", step.title, 30);
+  if (!state.tourActive || state.tourStepIndex !== stepSnapshot) return;
+  await typewriteHTML("tour-body", step.body, 25);
+  if (!state.tourActive || state.tourStepIndex !== stepSnapshot) return;
+  await typewriteHTML("tour-action-prompt", step.prompt, 26);
+}
+
+function setRoadblockMode(enabled) {
+  state.roadblockMode = enabled;
+  const rbBtn = document.getElementById("btn-roadblock-mode");
+  const rbBanner = document.getElementById("roadblock-map-banner");
+  const mapEl = document.getElementById("map");
+
+  rbBtn.classList.toggle("active", enabled);
+  rbBtn.textContent = enabled
+    ? "🎯 Now Click Any Route on the Map!"
+    : "🚧 Drop Live Roadblock on Map";
+
+  rbBanner.classList.toggle("hidden", !enabled);
+  mapEl.classList.toggle("roadblock-cursor-active", enabled);
+
+  if (state.tourActive && enabled) {
+    document.getElementById("spotlight-hole").style.opacity = "0";
+    typewriteHTML(
+      "tour-action-prompt",
+      "🎯 Move your mouse onto the Manchester map and CLICK directly on any glowing route line!",
+      26
+    );
+  }
 }
 
 function connectWebSocket() {
@@ -711,7 +999,15 @@ function connectWebSocket() {
     updateMapEntities(tickData);
     updateHUDAndSidebar(tickData);
 
-    if (state.wasRunning && !tickData.running && !state.impactShownForRun) {
+    const ambs = tickData.ambulances || [];
+    const allArrived =
+      ambs.length > 0 && ambs.every((a) => a.status !== "EN_ROUTE");
+
+    if (
+      state.wasRunning &&
+      (!tickData.running || allArrived) &&
+      !state.impactShownForRun
+    ) {
       state.impactShownForRun = true;
       fetchAndShowImpactModal();
     }
@@ -769,7 +1065,8 @@ async function triggerStartSimulation() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Landing page buttons: Launch with Interactive Judge Tour OR Skip directly to Sandbox
+  runHeroLandingTypewriter();
+
   document.getElementById("btn-launch-tour").addEventListener("click", () => {
     document.getElementById("landing-overlay").classList.add("fade-out");
     setTimeout(() => startOnboardingTour(), 450);
@@ -779,12 +1076,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("landing-overlay").classList.add("fade-out");
   });
 
-  // Top bar Guided Tour replay button
   document.getElementById("btn-start-tour").addEventListener("click", () => {
     startOnboardingTour();
   });
 
-  // Tour Navigation buttons
   document.getElementById("btn-tour-skip").addEventListener("click", stopOnboardingTour);
   document.getElementById("btn-tour-prev").addEventListener("click", () => {
     if (state.tourStepIndex > 0) {
@@ -805,7 +1100,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (state.tourActive) renderTourStep();
   });
 
-  // Spawn 5 vs Spawn 10 buttons
   document.querySelectorAll("[data-count]").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
@@ -814,16 +1108,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.classList.add("active-spawn");
       state.ambulanceCount = Number(btn.dataset.count);
       triggerSpawnPreview();
-      if (state.tourActive && state.tourStepIndex === 0) {
+      if (state.tourActive && state.tourStepIndex === 1) {
         setTimeout(() => {
-          state.tourStepIndex = 1;
+          state.tourStepIndex = 2;
           renderTourStep();
-        }, 600);
+        }, 650);
       }
     });
   });
 
-  // Policy Toggle (TRIAGE vs NEAREST)
   document.querySelectorAll(".policy-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
@@ -835,7 +1128,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Traffic / Time-of-Day chips
   document.querySelectorAll(".traffic-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
       document
@@ -848,7 +1140,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Speed chips
   document.querySelectorAll(".speed-chip").forEach((chip) => {
     chip.addEventListener("click", async () => {
       document
@@ -864,26 +1155,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Roadblock Mode
-  const rbBtn = document.getElementById("btn-roadblock-mode");
-  rbBtn.addEventListener("click", () => {
-    state.roadblockMode = !state.roadblockMode;
-    rbBtn.classList.toggle("active", state.roadblockMode);
-    rbBtn.textContent = state.roadblockMode
-      ? "🎯 Click Anywhere on Map to Drop Roadblock"
-      : "🚧 Drop Live Roadblock on Map";
+  document.getElementById("btn-roadblock-mode").addEventListener("click", () => {
+    setRoadblockMode(!state.roadblockMode);
+  });
 
-    // If in tour step 5, hide the spotlight overlay temporarily so they can click the map freely!
-    if (state.tourActive && state.roadblockMode) {
-      document.getElementById("spotlight-hole").style.opacity = "0";
-      document.getElementById("tour-action-prompt").innerHTML =
-        "🎯 Now click directly on any glowing route line on the Manchester map!";
-    }
+  document.getElementById("btn-cancel-rb-banner").addEventListener("click", () => {
+    setRoadblockMode(false);
   });
 
   document
     .getElementById("btn-clear-roadblocks")
     .addEventListener("click", async () => {
+      setRoadblockMode(false);
       const res = await fetch("/api/roadblocks", { method: "DELETE" });
       const snap = await res.json();
       updateMapEntities(snap);
@@ -892,9 +1175,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   map.on("click", async (e) => {
     if (!state.roadblockMode) return;
-    state.roadblockMode = false;
-    rbBtn.classList.remove("active");
-    rbBtn.textContent = "🚧 Drop Live Roadblock on Map";
+    setRoadblockMode(false);
     const res = await fetch("/api/roadblock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -910,25 +1191,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (state.tourActive) {
       document.getElementById("spotlight-hole").style.opacity = "1";
-      state.tourStepIndex = 5; // Advance to Step 6 (Simulate Live Routing)
+      state.tourStepIndex = 6;
       renderTourStep();
     }
   });
 
-  // Simulate Button
   document
     .getElementById("btn-simulate")
     .addEventListener("click", triggerStartSimulation);
 
-  // Impact Calculator buttons
   document.getElementById("btn-open-impact").addEventListener("click", () => {
     if (state.tourActive) stopOnboardingTour();
     fetchAndShowImpactModal();
   });
   document.getElementById("btn-close-impact").addEventListener("click", () => {
+    impactRunToken++;
     document.getElementById("impact-modal").classList.add("hidden");
   });
   document.getElementById("btn-replay-triage").addEventListener("click", () => {
+    impactRunToken++;
     document.getElementById("impact-modal").classList.add("hidden");
     state.policy = "TRIAGE";
     document.getElementById("btn-policy-triage").classList.add("active");
@@ -936,6 +1217,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     triggerStartSimulation();
   });
   document.getElementById("btn-replay-nearest").addEventListener("click", () => {
+    impactRunToken++;
     document.getElementById("impact-modal").classList.add("hidden");
     state.policy = "NEAREST";
     document.getElementById("btn-policy-nearest").classList.add("active");
@@ -943,13 +1225,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     triggerStartSimulation();
   });
 
-  // Inspector close
   document.getElementById("btn-close-inspector").addEventListener("click", () => {
     document.getElementById("inspector-drawer").classList.add("hidden");
     state.selectedEntity = null;
   });
 
-  // Sidebar Tabs
   const tabs = [
     ["tab-btn-ambulances", "ambulances"],
     ["tab-btn-hospitals", "hospitals"],
@@ -966,7 +1246,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Fetch architecture info for the top HUD bar
   try {
     const hRes = await fetch("/api/health");
     const hData = await hRes.json();

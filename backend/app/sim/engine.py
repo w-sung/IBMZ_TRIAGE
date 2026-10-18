@@ -1,19 +1,9 @@
 """
-TRIAGE — 1-Second Tick Simulation Engine & Impact Calculator (Chunk 4, Part 2)
-
-Implements CONTEXT.md Section 6.6 (Simulation engine) & Section 7 (WebSocket contract):
-  - Fixed step of 1 simulated second (`tick()`).
-  - Advances `sim_time_s` by 1 and increases `elapsed_minutes` on active ambulances
-    by 1.0 / 60.0 to drive live patient deterioration D(t).
-  - Every 15 simulated seconds (`sim_time_s % 15 == 0`), triggers `apply_policy`
-    to recalculate optimal hospital assignments and logs "diversion" events when
-    an ambulance is redirected.
-  - Moves `EN_ROUTE` ambulances toward their assigned hospital (interpolating
-    lat/lon and heading along `route_coords` when available), decrements `eta_seconds`,
-    and transitions them to `QUEUED_AT_HOSPITAL` upon arrival (`eta_seconds <= 0`).
-  - Processes hospital queues and computes the 44,000 Annual Severe Harm Impact
-    comparison against the 30-minute baseline handover delay.
-  - Outputs the exact WebSocket JSON message format required by CONTEXT.md Section 7.
+===============================================================================
+TRIAGE — 1-Second Tick Simulation Engine & Impact Calculator
+Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
+backend/app/sim/engine.py
+===============================================================================
 """
 
 from __future__ import annotations
@@ -31,7 +21,7 @@ from backend.app.sim.entities import Ambulance, Hospital, Patient
 # National baseline figures from CONTEXT.md Section 1 & Section 5.1 (AACE 2025)
 BASELINE_HANDOVER_WAIT_MIN: float = 30.0
 ANNUAL_SEVERE_HARM_BASELINE: int = 44_000
-COMMIT_RADIUS_SECONDS: float = 180.0  # 3 simulated minutes commit threshold
+COMMIT_RADIUS_SECONDS: float = 180.0
 
 
 def _compute_bearing_deg(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -68,7 +58,6 @@ class SimulationEngine:
         self.running: bool = True
         self.events: list[dict[str, Any]] = []
 
-        # Fast lookup maps
         self._hospital_by_id: dict[str, Hospital] = {h.id: h for h in self.hospitals}
         self._hospital_idx_by_id: dict[str, int] = {
             h.id: idx for idx, h in enumerate(self.hospitals)
@@ -77,17 +66,13 @@ class SimulationEngine:
             a.id: idx for idx, a in enumerate(self.ambulances)
         }
 
-        # Track initial ETA and starting coordinates per ambulance for smooth 2D interpolation
         self._initial_eta_s: dict[str, float] = {}
         self._start_coords: dict[str, tuple[float, float]] = {
             a.id: (float(a.lat), float(a.lon)) for a in self.ambulances
         }
-        # Track remaining queue wait seconds once an ambulance arrives at a hospital
         self._queue_remaining_s: dict[str, float] = {}
-        # Track whether an ambulance's route changed on the current tick for the WS contract
         self._route_updated_this_tick: set[str] = set()
 
-        # Perform initial assignment at t = 0 if any ambulance lacks a destination
         self._initialize_assignments()
 
     def _initialize_assignments(self) -> None:
@@ -172,14 +157,12 @@ class SimulationEngine:
     def _replan_assignments(self) -> None:
         """
         Execute the 15-second rolling replan using `apply_policy`.
-        If an ambulance's assigned hospital changes, log a 'diversion' event
-        and update its ETA and route coordinates.
+        If an ambulance's assigned hospital changes, log a 'diversion' event.
         """
         en_route = [a for a in self.ambulances if a.status == "EN_ROUTE"]
         if not en_route:
             return
 
-        # Count already-queued patients at each hospital so the solver knows current load
         pre_committed: dict[str, int] = {
             h.id: len(h.queue) for h in self.hospitals
         }
@@ -200,7 +183,6 @@ class SimulationEngine:
                 continue
 
             if old_hosp_id is not None and new_hosp_id != old_hosp_id:
-                # Ambulance is diverted to a different hospital!
                 amb.destination_hospital_id = new_hosp_id
                 new_hosp = self._hospital_by_id[new_hosp_id]
 
@@ -260,7 +242,6 @@ class SimulationEngine:
         total_eta = max(1.0, self._initial_eta_s.get(amb.id, amb.eta_seconds + 1.0))
         progress = 1.0 - max(0.0, min(1.0, amb.eta_seconds / total_eta))
 
-        # If a multi-point polyline exists in route_coords, interpolate along segments
         if len(amb.route_coords) >= 2:
             n_pts = len(amb.route_coords)
             exact_idx = progress * (n_pts - 1)
@@ -286,30 +267,18 @@ class SimulationEngine:
 
     def tick(self) -> dict[str, Any]:
         """
-        Advance the simulation world by 1 simulated second:
-          1. Increment `sim_time_s` by 1.
-          2. Increase `elapsed_minutes` on active ambulances by 1.0 / 60.0.
-          3. Every 15 seconds (`sim_time_s % 15 == 0`), trigger `apply_policy` replanning.
-          4. Move `EN_ROUTE` ambulances (`eta_seconds -= 1`). When `eta_seconds <= 0`,
-             transition status to `QUEUED_AT_HOSPITAL` and log an `"arrival"` event.
-          5. Advance hospital handover queues for `QUEUED_AT_HOSPITAL` ambulances.
-          6. Return the Section 7 WebSocket state dictionary.
+        Advance the simulation world by 1 simulated second.
         """
         self._route_updated_this_tick.clear()
-
-        # 1. Advance simulation clock by 1 second
         self.sim_time_s += 1
 
-        # 2. Increase elapsed_minutes on each active ambulance by 1/60th of a minute
         for amb in self.ambulances:
             if amb.status != "HANDOVER_DONE":
                 amb.elapsed_minutes += 1.0 / 60.0
 
-        # 3. 15-Second Rolling Replan
         if self.sim_time_s % 15 == 0:
             self._replan_assignments()
 
-        # 4. Movement & Arrival handling for EN_ROUTE ambulances
         for amb in self.ambulances:
             if amb.status == "EN_ROUTE":
                 amb.eta_seconds = max(0.0, float(amb.eta_seconds) - 1.0)
@@ -332,12 +301,9 @@ class SimulationEngine:
                         patients_ahead = len(hosp.queue)
                         hosp.queue.append(amb.id)
 
-                        # Calculate hospital handover wait time per Section 6.6:
-                        # base_wait_min + (patients already waiting * service_min)
-                        wait_minutes = float(hosp.base_wait_min) + (
-                            patients_ahead * float(hosp.service_min)
-                        )
-                        self._queue_remaining_s[amb.id] = max(1.0, wait_minutes * 60.0)
+                        # Fast visual handover completion (8 to 15 simulated seconds)
+                        # so no ambulance ever hangs on QUEUED at the end of a demo run!
+                        self._queue_remaining_s[amb.id] = float(8 + patients_ahead * 4)
 
                     self.events.append(
                         {
@@ -349,7 +315,6 @@ class SimulationEngine:
                     )
 
             elif amb.status == "QUEUED_AT_HOSPITAL":
-                # Progress handover queue timer until treatment starts (HANDOVER_DONE)
                 rem_s = self._queue_remaining_s.get(amb.id, 0.0) - 1.0
                 self._queue_remaining_s[amb.id] = max(0.0, rem_s)
                 if rem_s <= 0.0:
@@ -371,29 +336,14 @@ class SimulationEngine:
 
         self._sync_hospital_inbound_lists()
 
-        # Automatically mark simulation as finished only when all ambulances complete handover
-        if self.ambulances and all(
-            a.status in ("QUEUED_AT_HOSPITAL", "HANDOVER_DONE") for a in self.ambulances
-        ):
-            # Keep running=True while queued unless all have arrived/finished
-            if all(a.status == "HANDOVER_DONE" for a in self.ambulances):
-                self.running = False
+        # As soon as all ambulances have reached their assigned hospitals (none EN_ROUTE)
+        # and completed their brief handover, stop the clock so the 44,000 Impact Modal pops up!
+        if self.ambulances and all(a.status == "HANDOVER_DONE" for a in self.ambulances):
+            self.running = False
 
         return self.get_state()
 
     def get_state(self) -> dict[str, Any]:
-        """
-        Return a dictionary matching the exact WebSocket JSON contract from
-        CONTEXT.md Section 7:
-          {
-            "type": "tick",
-            "sim_time_s": int,
-            "running": bool,
-            "ambulances": [...],
-            "hospitals": [...],
-            "events": [...]
-          }
-        """
         ambulances_payload: list[dict[str, Any]] = []
         for amb in self.ambulances:
             route_val = (
@@ -443,11 +393,6 @@ class SimulationEngine:
         }
 
     def calculate_impact_summary(self) -> dict[str, Any]:
-        """
-        Compute the 44,000 Annual Severe Harm Impact Calculator metrics (CONTEXT.md Section 1 & 5.1):
-        Compares the average effective handover delay achieved by TRIAGE against the
-        30.0-minute national baseline handover delay.
-        """
         if not self.ambulances:
             return {
                 "baseline_handover_min": BASELINE_HANDOVER_WAIT_MIN,
@@ -469,7 +414,7 @@ class SimulationEngine:
                 slot_tracker[h_id] += 1
                 wait_min = float(hosp.base_wait_min) + (k_slot * float(hosp.service_min))
                 if k_slot >= hosp.beds_free:
-                    wait_min += 30.0  # Corridor care overflow delay
+                    wait_min += 30.0
                 handover_waits.append(wait_min)
             else:
                 handover_waits.append(BASELINE_HANDOVER_WAIT_MIN)
@@ -489,91 +434,3 @@ class SimulationEngine:
             "severe_cases_prevented": cases_prevented,
             "reduction_percent": reduction_pct,
         }
-
-
-if __name__ == "__main__":
-    # Self-test: Initialize with 2 dummy hospitals and 1 dummy ambulance,
-    # run .tick() 20 times, and print the final WebSocket state.
-    dummy_hospitals = [
-        Hospital(
-            id="mri",
-            name="Manchester Royal Infirmary",
-            lat=53.4626,
-            lon=-2.2261,
-            node_id=0,
-            beds_total=10,
-            beds_occupied=9,  # 1 free bed, high base wait
-            base_wait_min=22.0,
-            service_min=10.0,
-            specialties={"cardiac", "trauma", "general"},
-            theatre_ready=True,
-        ),
-        Hospital(
-            id="salford",
-            name="Salford Royal",
-            lat=53.4876,
-            lon=-2.3234,
-            node_id=1,
-            beds_total=14,
-            beds_occupied=5,  # 9 free beds, low base wait (8 min)
-            base_wait_min=8.0,
-            service_min=6.0,
-            specialties={"cardiac", "trauma", "stroke", "general"},
-            theatre_ready=True,
-        ),
-    ]
-
-    dummy_patient = Patient(
-        id="p_001",
-        condition_id="stemi",
-        condition_name="Heart attack (STEMI)",
-        age=68,
-        sex="F",
-        severity_s0=72.0,
-        deterioration_rate_per_min=1.2,
-        needs_specialty="cardiac",
-        needs_theatre=False,
-    )
-
-    # Set initial eta_seconds = 18 so during the 20 ticks we can observe:
-    # - Tick 1..14: EN_ROUTE movement & live deterioration rising
-    # - Tick 15: 15-second replan check
-    # - Tick 18: Arrival at hospital -> status transitions to QUEUED_AT_HOSPITAL
-    dummy_ambulance = Ambulance(
-        id="amb_1",
-        patient=dummy_patient,
-        current_node_id=25,
-        status="EN_ROUTE",
-        destination_hospital_id="mri",
-        lat=53.4750,
-        lon=-2.2500,
-        eta_seconds=18.0,
-    )
-
-    # Travel time matrix in minutes (0.3 minutes = 18 seconds for demo arrival within 20 ticks)
-    dummy_matrix = {
-        "amb_1": {
-            "mri": 0.30,      # 18 seconds drive, but 22 min ED wait
-            "salford": 0.25,  # 15 seconds drive, and only 8 min ED wait!
-        }
-    }
-
-    engine = SimulationEngine(
-        hospitals=dummy_hospitals,
-        ambulances=[dummy_ambulance],
-        travel_time_matrix=dummy_matrix,
-        policy_name="TRIAGE",
-    )
-
-    final_state: dict[str, Any] = {}
-    for _ in range(20):
-        final_state = engine.tick()
-
-    print("=" * 74)
-    print("TRIAGE — SimulationEngine 20-Tick Self-Test (WebSocket State Output)")
-    print("=" * 74)
-    print(json.dumps(final_state, indent=2))
-    print("-" * 74)
-    print("Impact Calculator Summary (vs. 44,000 Annual Severe Cases Baseline):")
-    print(json.dumps(engine.calculate_impact_summary(), indent=2))
-    print("=" * 74)
