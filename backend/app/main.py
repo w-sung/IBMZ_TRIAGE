@@ -1,20 +1,9 @@
 """
-TRIAGE — FastAPI Backend Server & 5Hz WebSocket Simulation Stream (Chunk 6)
-
-Implements CONTEXT.md Section 6.6, Section 7, and Section 8:
-  - Serves the static frontend (`frontend/index.html`, `/css`, `/js`) at `/`.
-  - Initializes the CSR `RoutingGraph`, `Predictor` (HistGradientBoostingRegressor),
-    and `NoteGenerator` (DeepSeek via OpenRouter with template fallback).
-  - `POST /api/start`: Spawns N ambulances (e.g., 5 or 10) on the Greater Manchester
-    road graph, predicts each patient's S0 severity and deterioration rate, computes
-    real road polylines via backwards Dijkstra, and initializes `SimulationEngine`.
-  - `GET /api/impact`: Returns the 44,000 Annual Severe Harm Impact Calculator summary,
-    including a direct head-to-head comparison against the `NEAREST` baseline on the
-    exact same seed.
-  - `PATCH /api/hospital/{hospital_id}`: Live-edits hospital beds or wait time.
-  - `POST /api/roadblock`: Places a live roadblock on the map and triggers an immediate replan.
-  - `WebSocket /ws`: Streams `engine.tick()` states at 5Hz (0.2s wall-clock interval)
-    with configurable simulation speed multiplier, plus async DeepSeek note upgrades.
+===============================================================================
+TRIAGE — FastAPI Backend Server & 5Hz WebSocket Simulation Stream
+Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
+backend/app/main.py
+===============================================================================
 """
 
 from __future__ import annotations
@@ -34,20 +23,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from backend.app.guidance.assign import lookup_drive_minutes
-from backend.app.guidance.policies import apply_policy
 from backend.app.health.train import CONDITIONS_BY_ID, Predictor, get_predictor
 from backend.app.notes.generator import NoteFacts, NoteGenerator
 from backend.app.routing.graph import RoutingGraph
-from backend.app.sim.engine import (
-    ANNUAL_SEVERE_HARM_BASELINE,
-    BASELINE_HANDOVER_WAIT_MIN,
-    SimulationEngine,
-)
+from backend.app.sim.engine import SimulationEngine
 from backend.app.sim.entities import Ambulance, Hospital, Patient
 from backend.app.sim.traffic import Roadblock
 from scripts.make_patients import generate_dataset
 
-# Resolve project root and directories reliably across Windows and IBM LinuxONE (s390x)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
@@ -83,9 +66,9 @@ current_config: dict[str, Any] = {
     "ambulances": 5,
     "policy": "TRIAGE",
     "traffic_level": "normal",
-    "hour_of_day": 20.37,  # 8:22 PM default from pitch story
+    "hour_of_day": 20.37,
     "seed": 42,
-    "speed": 5,  # ticks per wall-clock second (5 ticks/sec = 1 tick per 0.2s)
+    "speed": 15,
 }
 active_roadblocks: list[Roadblock] = []
 
@@ -96,11 +79,11 @@ class StartSimRequest(BaseModel):
     traffic_level: str = Field(default="normal")
     hour_of_day: float = Field(default=20.37)
     seed: int = Field(default=42)
-    speed: int = Field(default=5, ge=1, le=60)
+    speed: int = Field(default=15, ge=1, le=60)
 
 
 class SpeedUpdateRequest(BaseModel):
-    speed: int = Field(default=5, ge=1, le=60)
+    speed: int = Field(default=15, ge=1, le=60)
 
 
 class HospitalPatchRequest(BaseModel):
@@ -113,11 +96,10 @@ class HospitalPatchRequest(BaseModel):
 class RoadblockRequest(BaseModel):
     lat: float
     lon: float
-    radius_m: float = 550.0
+    radius_m: float = 650.0
 
 
 def _ensure_backends_loaded() -> tuple[RoutingGraph, Predictor]:
-    """Lazily initialize the Manchester CSR road graph and HistGradientBoosting model."""
     global routing_graph, predictor
     if routing_graph is None:
         routing_graph = RoutingGraph()
@@ -127,23 +109,15 @@ def _ensure_backends_loaded() -> tuple[RoutingGraph, Predictor]:
 
 
 def _load_hospitals_list() -> list[Hospital]:
-    """Load the 8 Greater Manchester NHS hospitals from data/hospitals.json."""
     if not HOSPITALS_PATH.exists():
         raise FileNotFoundError(f"Missing hospitals file at {HOSPITALS_PATH}")
     raw_list = json.loads(HOSPITALS_PATH.read_text(encoding="utf-8"))
-    hospitals = [Hospital.from_dict(item) for item in raw_list]
-    return hospitals
+    return [Hospital.from_dict(item) for item in raw_list]
 
 
 def _load_or_generate_patients(seed: int, count: int) -> list[dict[str, Any]]:
-    """
-    Draw a vivid, realistic mix of emergency patients (prioritizing high-acuity
-    STEMI, stroke, trauma, cardiac arrest, ruptured AAA, respiratory failure, etc.)
-    so the anti-stampede demo is dramatic and clinically meaningful.
-    """
     _, pool = generate_dataset(seed=seed, num_patients=max(40, count * 4))
     rng = random.Random(seed)
-    # Weight towards time-critical emergencies for a compelling simulation
     critical_pool = [
         p for p in pool if p["condition_id"] not in ("minor_injury", "long_bone_fracture")
     ]
@@ -162,35 +136,44 @@ def _attach_real_road_polylines(
     sim_engine: SimulationEngine,
     rg: RoutingGraph,
     predecessors: Any,
+    times_sec: Any = None,
 ) -> None:
-    """Populate `amb.route_coords` with multi-hop Manchester road coordinates."""
+    """
+    Snap each EN_ROUTE ambulance to its nearest street intersection and reconstruct
+    its exact multi-hop Manchester street polyline around any active roadblocks!
+    """
     for amb in sim_engine.ambulances:
         if amb.status == "EN_ROUTE" and amb.destination_hospital_id:
             try:
+                live_node = rg.nearest_node(float(amb.lat), float(amb.lon))
+                amb.current_node_id = live_node
+
                 coords = rg.reconstruct_route_coords(
                     amb.destination_hospital_id,
-                    amb.current_node_id,
+                    live_node,
                     predecessors,
                 )
                 if len(coords) >= 2:
+                    coords[0] = [round(float(amb.lat), 6), round(float(amb.lon), 6)]
                     amb.route_coords = coords
                     sim_engine._route_updated_this_tick.add(amb.id)
+
+                    if times_sec is not None:
+                        h_idx = rg.hospital_index_by_id.get(amb.destination_hospital_id)
+                        if h_idx is not None:
+                            new_eta = float(times_sec[h_idx, live_node])
+                            if new_eta < 1e6:
+                                amb.eta_seconds = max(2.0, round(new_eta))
+                                sim_engine._initial_eta_s[amb.id] = amb.eta_seconds
             except Exception:
                 pass
 
 
 def _build_simulation_pair(req: StartSimRequest) -> tuple[SimulationEngine, SimulationEngine]:
-    """
-    Build both the primary `SimulationEngine` (using `req.policy`) and a shadow
-    `NEAREST` baseline engine on the exact same seed & ambulances so the Impact
-    Calculator can show true head-to-head metrics as well as the 30-min NHS baseline!
-    """
     rg, pred_model = _ensure_backends_loaded()
     rng = random.Random(req.seed)
 
     hospitals_main = _load_hospitals_list()
-    # Under heavy ambulance waves (e.g. 8-10 ambulances), make inner-city hospitals
-    # slightly busier so the stampede problem is immediately visible on the map
     if req.ambulances >= 5:
         for h in hospitals_main:
             if h.id in ("mri", "salford"):
@@ -204,13 +187,11 @@ def _build_simulation_pair(req: StartSimRequest) -> tuple[SimulationEngine, Simu
         roadblocks=active_roadblocks,
     )
 
-    # Pick non-hospital road nodes across Greater Manchester for spawning ambulances
     candidate_nodes = [
         nid
         for nid in sorted(rg.node_coords.keys())
         if nid not in rg.hospital_nodes and nid > 10
     ]
-    # Cluster ~60% of spawns near central/inner Manchester so naive routing stampedes MRI/Salford
     central_nodes = [
         nid
         for nid in candidate_nodes
@@ -223,7 +204,7 @@ def _build_simulation_pair(req: StartSimRequest) -> tuple[SimulationEngine, Simu
 
     for idx, p_dict in enumerate(patient_dicts):
         if central_nodes and idx < max(3, int(req.ambulances * 0.65)):
-            spawn_node = central_nodes[(idx * 5 + req.seed) % len(central_nodes)]
+            spawn_node = central_nodes[(idx * 17 + req.seed) % len(central_nodes)]
         else:
             spawn_node = rng.choice(candidate_nodes)
 
@@ -263,25 +244,21 @@ def _build_simulation_pair(req: StartSimRequest) -> tuple[SimulationEngine, Simu
         travel_time_matrix=times_sec,
         policy_name=req.policy,
     )
-    _attach_real_road_polylines(main_eng, rg, predecessors)
+    _attach_real_road_polylines(main_eng, rg, predecessors, times_sec=times_sec)
 
-    shadow_Policy = "NEAREST" if req.policy.upper() == "TRIAGE" else "TRIAGE"
+    shadow_policy = "NEAREST" if req.policy.upper() == "TRIAGE" else "TRIAGE"
     shadow_eng = SimulationEngine(
         hospitals=hospitals_shadow,
         ambulances=ambulances_shadow,
         travel_time_matrix=times_sec,
-        policy_name=shadow_Policy,
+        policy_name=shadow_policy,
     )
-    _attach_real_road_polylines(shadow_eng, rg, predecessors)
+    _attach_real_road_polylines(shadow_eng, rg, predecessors, times_sec=times_sec)
 
     return main_eng, shadow_eng
 
 
 async def _enrich_notes_with_deepseek(sim_engine: SimulationEngine) -> None:
-    """
-    Asynchronously upgrade ambulance handover notes using `NoteGenerator` (DeepSeek)
-    without ever blocking the 5Hz simulation tick loop.
-    """
     hosp_map = {h.id: h for h in sim_engine.hospitals}
     tasks = []
 
@@ -326,10 +303,6 @@ async def _enrich_notes_with_deepseek(sim_engine: SimulationEngine) -> None:
 
 
 def _serialize_enriched_state(sim_engine: SimulationEngine) -> dict[str, Any]:
-    """
-    Return the Section 7 WebSocket contract enriched with patient condition & vitals
-    so the frontend can display rich clickable ambulance & hospital cards.
-    """
     state = sim_engine.get_state()
     amb_by_id = {a.id: a for a in sim_engine.ambulances}
     hosp_by_id = {h.id: h for h in sim_engine.hospitals}
@@ -351,7 +324,6 @@ def _serialize_enriched_state(sim_engine: SimulationEngine) -> dict[str, Any]:
                 "needs_theatre": p.needs_theatre,
                 "vitals": p.vitals,
             }
-            # Always include current route coordinates so new WS clients can render polylines immediately
             if amb_dict.get("route") is None and amb_obj.route_coords:
                 amb_dict["route"] = amb_obj.route_coords
 
@@ -366,7 +338,7 @@ def _serialize_enriched_state(sim_engine: SimulationEngine) -> dict[str, Any]:
     state["policy"] = sim_engine.policy_name
     state["traffic_level"] = current_config.get("traffic_level", "normal")
     state["hour_of_day"] = current_config.get("hour_of_day", 20.37)
-    state["speed"] = current_config.get("speed", 5)
+    state["speed"] = current_config.get("speed", 15)
     state["roadblocks"] = [
         {"id": rb.id, "lat": rb.lat, "lon": rb.lon, "radius_m": rb.radius_m}
         for rb in active_roadblocks
@@ -376,18 +348,15 @@ def _serialize_enriched_state(sim_engine: SimulationEngine) -> dict[str, Any]:
 
 @app.on_event("startup")
 async def startup_event() -> None:
-    """Warm up the road graph, ML model, and an initial 5-ambulance scenario on startup."""
     global engine, baseline_engine
     _ensure_backends_loaded()
     default_req = StartSimRequest(ambulances=5, policy="TRIAGE")
     engine, baseline_engine = _build_simulation_pair(default_req)
-    # Pause initially so user sees ambulances poised on the map and can press Simulate
     engine.running = False
 
 
 @app.get("/api/health", tags=["System"])
 async def health_check() -> dict[str, Any]:
-    """Health check endpoint reporting architecture (e.g. s390x on LinuxONE) and ML model status."""
     rg, pred = _ensure_backends_loaded()
     return {
         "status": "ok",
@@ -410,7 +379,6 @@ async def health_check() -> dict[str, Any]:
 
 @app.get("/api/state", tags=["Simulation"])
 async def get_current_state() -> dict[str, Any]:
-    """Return the current simulation state for immediate map population on page load."""
     global engine, baseline_engine
     if engine is None:
         default_req = StartSimRequest(ambulances=5, policy="TRIAGE")
@@ -421,10 +389,6 @@ async def get_current_state() -> dict[str, Any]:
 
 @app.post("/api/start", tags=["Simulation"])
 async def start_simulation(req: StartSimRequest) -> dict[str, Any]:
-    """
-    Initialize and start a simulation with `ambulances` (e.g. 5 or 10) and `policy`
-    ("TRIAGE" or "NEAREST").
-    """
     global engine, baseline_engine, current_config
     current_config.update(
         {
@@ -438,19 +402,12 @@ async def start_simulation(req: StartSimRequest) -> dict[str, Any]:
     )
     engine, baseline_engine = _build_simulation_pair(req)
     engine.running = True
-
-    # Fire-and-forget async DeepSeek note generation so notes upgrade seamlessly
     asyncio.create_task(_enrich_notes_with_deepseek(engine))
-
     return _serialize_enriched_state(engine)
 
 
 @app.post("/api/spawn", tags=["Simulation"])
 async def spawn_preview(req: StartSimRequest) -> dict[str, Any]:
-    """
-    Spawn N ambulances on the map in a paused state so the user can inspect patients,
-    edit hospitals, or drop roadblocks before clicking 'Simulate'.
-    """
     global engine, baseline_engine, current_config
     current_config.update(
         {
@@ -470,14 +427,12 @@ async def spawn_preview(req: StartSimRequest) -> dict[str, Any]:
 
 @app.post("/api/speed", tags=["Simulation"])
 async def set_simulation_speed(req: SpeedUpdateRequest) -> dict[str, Any]:
-    """Adjust simulation playback speed multiplier live."""
     current_config["speed"] = req.speed
     return {"status": "ok", "speed": req.speed}
 
 
 @app.patch("/api/hospital/{hospital_id}", tags=["Simulation"])
 async def update_hospital(hospital_id: str, patch: HospitalPatchRequest) -> dict[str, Any]:
-    """Live-edit hospital bed capacity, occupied beds, or base wait time and trigger replan."""
     global engine
     if engine is None:
         raise HTTPException(status_code=400, detail="Simulation engine not initialized.")
@@ -495,8 +450,10 @@ async def update_hospital(hospital_id: str, patch: HospitalPatchRequest) -> dict
     if patch.theatre_ready is not None:
         hosp.theatre_ready = bool(patch.theatre_ready)
 
-    # Trigger an immediate replan so ambulances react to the edited hospital capacity!
     rg, _ = _ensure_backends_loaded()
+    for amb in engine.ambulances:
+        if amb.status == "EN_ROUTE":
+            amb.current_node_id = rg.nearest_node(float(amb.lat), float(amb.lon))
     times_sec, preds = rg.compute_travel_times(
         traffic_level=current_config["traffic_level"],
         hour_of_day=current_config["hour_of_day"],
@@ -505,7 +462,7 @@ async def update_hospital(hospital_id: str, patch: HospitalPatchRequest) -> dict
     )
     engine.travel_time_matrix = times_sec
     engine._replan_assignments()
-    _attach_real_road_polylines(engine, rg, preds)
+    _attach_real_road_polylines(engine, rg, preds, times_sec=times_sec)
     asyncio.create_task(_enrich_notes_with_deepseek(engine))
 
     return _serialize_enriched_state(engine)
@@ -513,7 +470,7 @@ async def update_hospital(hospital_id: str, patch: HospitalPatchRequest) -> dict
 
 @app.post("/api/roadblock", tags=["Simulation"])
 async def add_roadblock(req: RoadblockRequest) -> dict[str, Any]:
-    """Place a roadblock on the Manchester map and immediately recompute routes & assignments."""
+    """Place a roadblock on the Manchester map and immediately recompute street detours."""
     global engine
     rb = Roadblock(
         id=f"rb_{len(active_roadblocks)+1}_{int(datetime.now().timestamp())}",
@@ -525,6 +482,9 @@ async def add_roadblock(req: RoadblockRequest) -> dict[str, Any]:
 
     if engine is not None:
         rg, _ = _ensure_backends_loaded()
+        for amb in engine.ambulances:
+            if amb.status == "EN_ROUTE":
+                amb.current_node_id = rg.nearest_node(float(amb.lat), float(amb.lon))
         times_sec, preds = rg.compute_travel_times(
             traffic_level=current_config["traffic_level"],
             hour_of_day=current_config["hour_of_day"],
@@ -533,7 +493,7 @@ async def add_roadblock(req: RoadblockRequest) -> dict[str, Any]:
         )
         engine.travel_time_matrix = times_sec
         engine._replan_assignments()
-        _attach_real_road_polylines(engine, rg, preds)
+        _attach_real_road_polylines(engine, rg, preds, times_sec=times_sec)
         engine.events.append(
             {
                 "t": engine.sim_time_s,
@@ -553,6 +513,9 @@ async def clear_roadblocks() -> dict[str, Any]:
     active_roadblocks.clear()
     if engine is not None:
         rg, _ = _ensure_backends_loaded()
+        for amb in engine.ambulances:
+            if amb.status == "EN_ROUTE":
+                amb.current_node_id = rg.nearest_node(float(amb.lat), float(amb.lon))
         times_sec, preds = rg.compute_travel_times(
             traffic_level=current_config["traffic_level"],
             hour_of_day=current_config["hour_of_day"],
@@ -561,16 +524,12 @@ async def clear_roadblocks() -> dict[str, Any]:
         )
         engine.travel_time_matrix = times_sec
         engine._replan_assignments()
-        _attach_real_road_polylines(engine, rg, preds)
+        _attach_real_road_polylines(engine, rg, preds, times_sec=times_sec)
     return _serialize_enriched_state(engine) if engine else {"status": "ok"}
 
 
 @app.get("/api/impact", tags=["Evaluation"])
 async def get_impact_summary() -> dict[str, Any]:
-    """
-    Return `engine.calculate_impact_summary()` enriched with a side-by-side comparison
-    between TRIAGE AI and the Naive Nearest-Hospital policy on the exact same scenario.
-    """
     global engine, baseline_engine
     if engine is None:
         default_req = StartSimRequest(ambulances=5, policy="TRIAGE")
@@ -606,7 +565,7 @@ async def get_impact_summary() -> dict[str, Any]:
             hosp = sim_eng._hospital_by_id.get(h_id or "")
             if not hosp:
                 continue
-            k = slot_counts[h.id if (h := hosp) else ""]
+            k = slot_counts[hosp.id]
             slot_counts[hosp.id] += 1
 
             drive_m = lookup_drive_minutes(
@@ -642,7 +601,6 @@ async def get_impact_summary() -> dict[str, Any]:
 
     triage_details = _compute_detailed_metrics(triage_eng)
     nearest_details = _compute_detailed_metrics(nearest_eng)
-
     diversions_count = sum(1 for ev in engine.events if ev.get("kind") == "diversion")
 
     return {
@@ -669,12 +627,6 @@ async def get_impact_summary() -> dict[str, Any]:
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
-    """
-    5Hz wall-clock WebSocket loop (`await asyncio.sleep(0.2)`):
-      - Streams live `engine.tick()` states while `engine.running` is True.
-      - Supports multi-step fast-forward per wall tick (`speed` parameter) so a
-        15-minute Manchester drive can complete in ~20 seconds during a live demo!
-    """
     global engine, baseline_engine
     await websocket.accept()
 
@@ -684,33 +636,27 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         engine.running = False
 
     try:
-        # Immediately push initial snapshot on connection
         await websocket.send_json(_serialize_enriched_state(engine))
 
         while True:
             if engine is not None and engine.running:
-                # Advance simulation steps per 0.2s wall tick based on selected speed
-                # speed=5 -> 1 sim second per 0.2s (5x real-time)
-                # speed=15 -> 3 sim seconds per 0.2s (15x real-time)
-                # speed=30 -> 6 sim seconds per 0.2s (30x real-time)
-                steps_per_frame = max(1, int(round(current_config.get("speed", 5) / 5)))
+                steps_per_frame = max(1, int(round(current_config.get("speed", 15) / 5)))
                 for _ in range(steps_per_frame):
                     if not engine.running:
                         break
                     prev_events_len = len(engine.events)
                     engine.tick()
-                    # If a 15-second replan caused a diversion, reconstruct real road coordinates
                     if len(engine.events) > prev_events_len:
                         new_evs = engine.events[prev_events_len:]
                         if any(e.get("kind") == "diversion" for e in new_evs):
                             rg, _ = _ensure_backends_loaded()
-                            _, preds = rg.compute_travel_times(
+                            times_sec, preds = rg.compute_travel_times(
                                 traffic_level=current_config["traffic_level"],
                                 hour_of_day=current_config["hour_of_day"],
                                 roadblocks=active_roadblocks,
                                 sim_time_s=engine.sim_time_s,
                             )
-                            _attach_real_road_polylines(engine, rg, preds)
+                            _attach_real_road_polylines(engine, rg, preds, times_sec=times_sec)
                             asyncio.create_task(_enrich_notes_with_deepseek(engine))
 
                 await websocket.send_json(_serialize_enriched_state(engine))
@@ -723,6 +669,5 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         pass
 
 
-# Mount the `frontend/` directory at `/` LAST so `/api/*` and `/ws` take priority
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

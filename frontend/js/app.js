@@ -1,14 +1,9 @@
 /**
- * TRIAGE — Uber-Like 2D Leaflet Map, WebSocket Client & 60FPS Gliding Engine (Chunk 6)
- *
- * Implements CONTEXT.md Section 7 & Section 8:
- *   - Initializes a CartoDB Dark Matter Leaflet map centered on Manchester (53.4808, -2.2426).
- *   - Connects to `ws://localhost:8000/ws` (dynamically adapts to any host/SSH tunnel).
- *   - Smoothly interpolates ambulance lat/lon & compass heading between 200ms ticks
- *     using `requestAnimationFrame` for buttery 60FPS movement.
- *   - Renders glowing route polylines, hospital stress badges, floating ambulance
- *     ETA + Deterioration bubbles, clickable hospital/ambulance inspectors, and the
- *     44,000 Annual Severe Cases Impact Calculator modal.
+ * ============================================================================
+ * TRIAGE — Uber-Like 2D Leaflet Map, WebSocket Client & 60FPS Gliding Engine
+ * Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
+ * frontend/js/app.js
+ * ============================================================================
  */
 
 const MANCHESTER_CENTER = [53.4808, -2.2426];
@@ -28,7 +23,7 @@ const state = {
   impactShownForRun: false,
 };
 
-// Initialize Leaflet Map with CartoDB Dark Matter tiles
+// Initialize Leaflet Map centered on Greater Manchester
 const map = L.map("map", {
   center: MANCHESTER_CENTER,
   zoom: 12,
@@ -38,12 +33,12 @@ const map = L.map("map", {
 
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  subdomains: "abcd",
+// Official OpenStreetMap tile server: 100% free, ZERO watermarks, shows real Manchester street blocks & roads
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
 }).addTo(map);
 
-// Distinct neon colors per hospital so routes are immediately readable
+// Distinct neon colors per hospital so routes look like Uber navigation lines
 const HOSPITAL_COLORS = {
   mri: "#00e5ff",
   salford: "#00f59b",
@@ -59,6 +54,7 @@ const HOSPITAL_COLORS = {
 const hospitalMarkers = new Map();
 const ambulanceMarkers = new Map();
 const ambulancePolylines = new Map();
+const ambulanceGlowLines = new Map();
 const roadblockCircles = new Map();
 
 // Smooth 60FPS interpolation state per ambulance:
@@ -183,18 +179,21 @@ function updateMapEntities(tickData) {
         toLon: amb.lon,
         startMs: nowMs,
         durationMs: 200,
+        heading: amb.heading_deg || 0,
         data: amb,
       });
     } else {
       const marker = ambulanceMarkers.get(amb.id);
-      const currentLatLng = marker.getLatLng();
+      const currentPos = marker.getLatLng();
+
       ambInterpolation.set(amb.id, {
-        fromLat: currentLatLng.lat,
-        fromLon: currentLatLng.lng,
+        fromLat: currentPos.lat,
+        fromLon: currentPos.lng,
         toLat: amb.lat,
         toLon: amb.lon,
         startMs: nowMs,
         durationMs: 200,
+        heading: amb.heading_deg || 0,
         data: amb,
       });
 
@@ -208,27 +207,47 @@ function updateMapEntities(tickData) {
       );
     }
 
-    // Update or create route polyline
+    // Update or create Uber-style dual-layer route polyline (outer glow + crisp solid street line)
     const routeColor = HOSPITAL_COLORS[amb.hospital_id] || "#00e5ff";
     if (Array.isArray(amb.route) && amb.route.length >= 2) {
       if (!ambulancePolylines.has(amb.id)) {
+        const glowPoly = L.polyline(amb.route, {
+          color: routeColor,
+          weight: 10,
+          opacity: 0.24,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(map);
         const poly = L.polyline(amb.route, {
           color: routeColor,
-          weight: 3.5,
-          opacity: 0.78,
-          dashArray: "8, 8",
+          weight: 4.5,
+          opacity: 0.95,
+          lineCap: "round",
+          lineJoin: "round",
         }).addTo(map);
+        ambulanceGlowLines.set(amb.id, glowPoly);
         ambulancePolylines.set(amb.id, poly);
       } else {
+        const glowPoly = ambulanceGlowLines.get(amb.id);
         const poly = ambulancePolylines.get(amb.id);
+        if (glowPoly) {
+          glowPoly.setLatLngs(amb.route);
+          glowPoly.setStyle({
+            color: routeColor,
+            opacity: amb.status === "EN_ROUTE" ? 0.24 : 0.05,
+          });
+        }
         poly.setLatLngs(amb.route);
         poly.setStyle({
           color: routeColor,
-          opacity: amb.status === "EN_ROUTE" ? 0.8 : 0.2,
+          opacity: amb.status === "EN_ROUTE" ? 0.95 : 0.2,
         });
       }
     } else if (ambulancePolylines.has(amb.id) && amb.status !== "EN_ROUTE") {
       ambulancePolylines.get(amb.id).setStyle({ opacity: 0.18 });
+      if (ambulanceGlowLines.has(amb.id)) {
+        ambulanceGlowLines.get(amb.id).setStyle({ opacity: 0.04 });
+      }
     }
   });
 
@@ -246,6 +265,12 @@ function updateMapEntities(tickData) {
       ambulancePolylines.delete(id);
     }
   }
+  for (const [id, glowPoly] of ambulanceGlowLines.entries()) {
+    if (!activeAmbIds.has(id)) {
+      map.removeLayer(glowPoly);
+      ambulanceGlowLines.delete(id);
+    }
+  }
 
   // 3. Render Roadblocks
   const rbIds = new Set();
@@ -256,8 +281,8 @@ function updateMapEntities(tickData) {
         radius: rb.radius_m || 550,
         color: "#ff3b5c",
         fillColor: "#ff3b5c",
-        fillOpacity: 0.28,
-        weight: 2,
+        fillOpacity: 0.32,
+        weight: 2.5,
       }).addTo(map);
       roadblockCircles.set(rb.id, circle);
     }
@@ -270,7 +295,6 @@ function updateMapEntities(tickData) {
   }
 }
 
-// 60FPS `requestAnimationFrame` glider for ambulance markers
 function animateAmbulancesFrame(nowMs) {
   for (const [ambId, interp] of ambInterpolation.entries()) {
     const marker = ambulanceMarkers.get(ambId);
@@ -366,6 +390,9 @@ function renderSidebarList(tickData) {
           .map((e) => {
             if (e.kind === "diversion") {
               return `<div class="fleet-item-card"><span class="mono" style="color:#00e5ff">[t=${e.t}s] ⚡ DIVERSION</span><div class="fleet-cond">${e.ambulance_id} redirected from <b>${e.from}</b> to <b>${e.to}</b></div></div>`;
+            }
+            if (e.kind === "roadblock") {
+              return `<div class="fleet-item-card"><span class="mono" style="color:#ff3b5c">[t=${e.t}s] 🚧 ROADBLOCK</span><div class="fleet-cond">Emergency roadblock at (${e.lat}, ${e.lon}) — routes recalculated!</div></div>`;
             }
             if (e.kind === "arrival") {
               return `<div class="fleet-item-card"><span class="mono" style="color:#00f59b">[t=${e.t}s] 🏥 ARRIVAL</span><div class="fleet-cond">${e.ambulance_id} arrived at <b>${e.hospital_id}</b></div></div>`;
@@ -612,6 +639,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const res = await fetch("/api/roadblocks", { method: "DELETE" });
       const snap = await res.json();
       updateMapEntities(snap);
+      updateHUDAndSidebar(snap);
     });
 
   map.on("click", async (e) => {
@@ -625,7 +653,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       body: JSON.stringify({
         lat: e.latlng.lat,
         lon: e.latlng.lng,
-        radius_m: 600,
+        radius_m: 650,
       }),
     });
     const snap = await res.json();
@@ -683,7 +711,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       document
         .querySelectorAll(".tab-btn")
         .forEach((b) => b.classList.remove("active"));
-      document.getElementById(btnId).classList.add("active");
+      document.getElementById(btnId).addEventListener("active");
       state.activeTab = tabName;
       if (state.lastTickState) renderSidebarList(state.lastTickState);
     });
@@ -695,7 +723,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const hData = await hRes.json();
     document.getElementById(
       "hud-arch-label"
-    ).textContent = `IBM LinuxONE (${hData.architecture}) · Model R²=${hData.ml_model_r2} · ${hData.graph_nodes} Nodes`;
+    ).textContent = `IBM LinuxONE (${hData.architecture}) · Model R²=${hData.ml_model_r2} · ${hData.graph_nodes} Street Nodes`;
   } catch (e) {}
 
   // Load initial paused map state & open WebSocket stream

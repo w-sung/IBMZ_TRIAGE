@@ -1,13 +1,9 @@
 """
-TRIAGE — CSR Sparse Graph & Backwards Dijkstra Routing Engine (Chunk 2)
-
-Implements CONTEXT.md Section 6.1 & Section 4 (s390x gotchas):
-  - Loads data/nodes.csv, data/edges.csv, and data/hospitals.json
-  - Deduplicates parallel (u, v) edges to their MINIMUM base travel time before
-    constructing the scipy.sparse.csr_matrix (because CSR sums duplicate entries!)
-  - Runs backwards Dijkstra from all 8 hospitals simultaneously on the transposed
-    CSR graph: `dijkstra(G.T.tocsr(), directed=True, indices=hospital_nodes, return_predecessors=True)`
-  - Reconstructs full node paths and [lat, lon] coordinate polylines for Leaflet.js
+===============================================================================
+TRIAGE — CSR Sparse Graph & Backwards Dijkstra Routing Engine (Chunk 2 Enhanced)
+Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
+backend/app/routing/graph.py
+===============================================================================
 """
 
 import csv
@@ -15,7 +11,7 @@ import json
 import math
 from pathlib import Path
 import time
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -46,17 +42,14 @@ class RoutingGraph:
         self.hospitals_path = hospitals_path or (DATA_DIR / "hospitals.json")
         self.seed = seed
 
-        # Node lookup structures
         self.node_coords: Dict[int, Tuple[float, float]] = {}
         self.num_nodes: int = 0
 
-        # Hospital lookup structures
         self.hospitals: List[Dict[str, Any]] = []
         self.hospital_ids: List[str] = []
         self.hospital_nodes: List[int] = []
         self.hospital_index_by_id: Dict[str, int] = {}
 
-        # Deduplicated edge arrays
         self.edge_u: np.ndarray = np.empty(0, dtype=np.int32)
         self.edge_v: np.ndarray = np.empty(0, dtype=np.int32)
         self.edge_length_m: np.ndarray = np.empty(0, dtype=np.float64)
@@ -84,7 +77,6 @@ class RoutingGraph:
 
     @staticmethod
     def _resolve_file(filename: str) -> Path:
-        """Check data/<filename> first, then fallback to data/graph/<filename>."""
         primary = DATA_DIR / filename
         if primary.exists():
             return primary
@@ -111,9 +103,7 @@ class RoutingGraph:
 
     def _load_hospitals(self) -> None:
         if not self.hospitals_path.exists():
-            raise FileNotFoundError(
-                f"Hospitals file not found at {self.hospitals_path}."
-            )
+            raise FileNotFoundError(f"Hospitals file not found at {self.hospitals_path}.")
         with self.hospitals_path.open("r", encoding="utf-8") as f:
             self.hospitals = json.load(f)
 
@@ -132,12 +122,6 @@ class RoutingGraph:
             self.hospital_index_by_id[hid] = idx
 
     def _load_and_dedupe_edges(self) -> None:
-        """
-        Load edges.csv and deduplicate any parallel (u, v) edges to the edge with
-        the MINIMUM base travel time in seconds.
-        Critical per CONTEXT.md Section 4: scipy.sparse.csr_matrix sums duplicate
-        (row, col) entries if not deduplicated first.
-        """
         if not self.edges_path.exists():
             raise FileNotFoundError(
                 f"Road edges file not found at {self.edges_path}. "
@@ -214,11 +198,12 @@ class RoutingGraph:
         """
         Build a (num_nodes x num_nodes) scipy.sparse.csr_matrix where each edge weight
         is `base_seconds / congestion_multiplier`.
+        Allows 0.0001 roadblock multipliers so blocked streets receive a 10,000x penalty!
         """
         if congestion_multipliers is None:
             weights = self.edge_base_seconds.copy()
         else:
-            safe_mult = np.clip(congestion_multipliers, 0.01, 1.0)
+            safe_mult = np.clip(congestion_multipliers, 1e-5, 1.0)
             weights = self.edge_base_seconds / safe_mult
 
         return csr_matrix(
@@ -235,12 +220,6 @@ class RoutingGraph:
         congestion_multipliers: Optional[np.ndarray] = None,
         sim_time_s: float = 0.0,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Run backwards Dijkstra from all hospital nodes on the transposed CSR graph.
-        Returns:
-          - times_to_hosp: shape (num_hospitals, num_nodes) in seconds
-          - predecessors : shape (num_hospitals, num_nodes) node IDs for path reconstruction
-        """
         if congestion_multipliers is None:
             congestion_multipliers = self.traffic_model.compute_multipliers(
                 traffic_level=traffic_level,
@@ -265,11 +244,6 @@ class RoutingGraph:
         start_node: int,
         predecessors: np.ndarray,
     ) -> List[int]:
-        """
-        Follow `predecessors[h_idx, :]` from `start_node` to `hospital_nodes[h_idx]`.
-        Because Dijkstra was run on the transposed graph `G.T`, `pred[h_idx, curr]`
-        gives the exact next forward node along the shortest path toward hospital `h_idx`!
-        """
         if isinstance(hospital_idx_or_id, str):
             h_idx = self.hospital_index_by_id[hospital_idx_or_id]
         else:
@@ -279,7 +253,7 @@ class RoutingGraph:
         if start_node == target_node:
             return [start_node]
 
-        path: List[int] = [ int(start_node) ]
+        path: List[int] = [int(start_node)]
         curr = int(start_node)
         max_steps = self.num_nodes + 5
 
@@ -300,10 +274,6 @@ class RoutingGraph:
         start_node: int,
         predecessors: np.ndarray,
     ) -> List[List[float]]:
-        """
-        Return the list of `[lat, lon]` coordinates along the optimal route
-        from `start_node` to the specified hospital for Leaflet.js polyline rendering.
-        """
         node_path = self.reconstruct_path(hospital_idx_or_id, start_node, predecessors)
         return [
             [self.node_coords[nid][0], self.node_coords[nid][1]]
@@ -312,7 +282,6 @@ class RoutingGraph:
         ]
 
     def nearest_node(self, lat: float, lon: float) -> int:
-        """Find the closest road graph node ID to any (lat, lon) coordinate."""
         best_nid = 0
         best_dist = float("inf")
         for nid, (nlat, nlon) in self.node_coords.items():
@@ -321,39 +290,3 @@ class RoutingGraph:
                 best_dist = d
                 best_nid = nid
         return best_nid
-
-
-if __name__ == "__main__":
-    t0 = time.perf_counter()
-    rg = RoutingGraph()
-    load_ms = (time.perf_counter() - t0) * 1000.0
-
-    t1 = time.perf_counter()
-    times_sec, preds = rg.compute_travel_times(traffic_level="normal", hour_of_day=20.37)
-    dijkstra_ms = (time.perf_counter() - t1) * 1000.0
-
-    times_rush, _ = rg.compute_travel_times(traffic_level="rush_hour", hour_of_day=8.5)
-
-    print("=" * 72)
-    print("TRIAGE — CSR Routing Engine & Backwards Dijkstra Self-Test")
-    print("=" * 72)
-    print(f"Nodes loaded               : {rg.num_nodes}")
-    print(
-        f"Edges loaded (deduplicated): {rg.deduped_edges_count} "
-        f"(removed {rg.raw_edges_count - rg.deduped_edges_count} parallel duplicates)"
-    )
-    print(f"Graph load time            : {load_ms:.2f} ms")
-    print(f"8-Hospital Dijkstra time   : {dijkstra_ms:.2f} ms (Target: < 100 ms)")
-    print("-" * 72)
-    sample_node = 25
-    s_lat, s_lon = rg.node_coords[sample_node]
-    print(f"Sample Ambulance at Node {sample_node} ({s_lat:.4f}, {s_lon:.4f}):")
-    for h_idx, hosp in enumerate(rg.hospitals):
-        eta_quiet_min = times_sec[h_idx, sample_node] / 60.0
-        eta_rush_min = times_rush[h_idx, sample_node] / 60.0
-        path_nodes = rg.reconstruct_path(h_idx, sample_node, preds)
-        print(
-            f"  -> {hosp['name']:<34} | 8:22 PM: {eta_quiet_min:>5.1f} min | "
-            f"Rush Hour: {eta_rush_min:>5.1f} min | Hops: {len(path_nodes)}"
-        )
-    print("=" * 72)

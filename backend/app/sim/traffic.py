@@ -1,11 +1,9 @@
 """
-TRIAGE — Dynamic Traffic & Roadblock Simulation Engine (Chunk 2)
-Implements CONTEXT.md Section 6.2:
-  - Congestion multiplier per edge between 0.15 and 1.0:
-      1 - (level * time_of_day_curve * road_class_factor * fixed_noise_per_edge)
-  - Dynamic time-of-day traffic curves (e.g., 8:22 PM quiet vs 10:00 AM busy vs 8:30 AM rush hour)
-  - Ambulance lights-and-sirens advantage (ambulances feel only half the congestion slowdown)
-  - User-placed roadblocks: edges within radius_m get multiplier 0.02, triggering instant replan
+===============================================================================
+TRIAGE — Dynamic Traffic & Roadblock Simulation Engine (Chunk 2 Enhanced)
+Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
+backend/app/sim/traffic.py
+===============================================================================
 """
 
 from dataclasses import dataclass
@@ -46,7 +44,7 @@ class Roadblock:
     id: str
     lat: float
     lon: float
-    radius_m: float = 450.0
+    radius_m: float = 600.0
 
 
 def haversine_distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -66,11 +64,6 @@ def time_of_day_curve(hour_of_day: Optional[float] = None) -> float:
     """
     Calculate a realistic urban traffic multiplier (between 0.30 and 1.0)
     based on the time of day (0.0 to 24.0 hours).
-    - Morning peak around 08:00 - 09:30 ( ~0.95 - 1.00 )
-    - Midday / 10:00 AM active daytime traffic ( ~0.75 - 0.82 )
-    - Evening peak around 17:00 - 18:30 ( ~0.95 - 1.00 )
-    - Evening 20:22 (8:22 PM) light traffic ( ~0.42 )
-    - Overnight 01:00 - 05:00 quiet roads ( ~0.30 )
     """
     if hour_of_day is None:
         now = datetime.now()
@@ -78,7 +71,6 @@ def time_of_day_curve(hour_of_day: Optional[float] = None) -> float:
 
     h = float(hour_of_day) % 24.0
 
-    # Double-Gaussian morning + evening rush hour + daytime plateau
     morning_peak = 0.62 * math.exp(-((h - 8.25) ** 2) / (2.0 * 1.35**2))
     midday_hum = 0.42 * math.exp(-((h - 13.0) ** 2) / (2.0 * 3.8**2))
     evening_peak = 0.65 * math.exp(-((h - 17.5) ** 2) / (2.0 * 1.50**2))
@@ -147,18 +139,15 @@ class TrafficModel:
         Return a 1D numpy array of congestion multipliers for every deduplicated edge.
         - Standard traffic multiplier lies in [0.15, 1.0].
         - Ambulances with lights & sirens feel only half of the congestion slowdown.
-        - Any edge within `radius_m` of an active Roadblock gets multiplier 0.02.
+        - Any street segment within `radius_m` of an active Roadblock gets multiplier 0.0001
+          (a 10,000x travel time penalty), forcing Dijkstra to detour cleanly around the roadblock!
         """
         if isinstance(traffic_level, (int, float)):
             level_val = float(max(0.0, min(1.0, traffic_level)))
         else:
             level_val = TRAFFIC_LEVEL_FACTORS.get(str(traffic_level).lower(), 0.52)
 
-        # If a named level is explicitly chosen (off_peak / normal / rush_hour),
-        # blend it with the time-of-day curve so both manual slider and clock time work naturally.
         tod_val = time_of_day_curve(hour_of_day) if hour_of_day is not None else 0.85
-
-        # Subtle slow deterministic drift over simulated time (Section 6.6)
         drift = 1.0 + 0.04 * math.sin(sim_time_s / 180.0)
 
         raw_slowdown = (
@@ -167,47 +156,26 @@ class TrafficModel:
         raw_slowdown = np.clip(raw_slowdown, 0.0, 0.85)
 
         if ambulance_lights_sirens:
-            # CONTEXT.md Section 6.2: "Ambulances feel only about half of the congestion slowdown"
             effective_slowdown = 0.50 * raw_slowdown
         else:
             effective_slowdown = raw_slowdown
 
         multipliers = np.clip(1.0 - effective_slowdown, 0.15, 1.0)
 
-        # Apply active roadblocks (multiplier = 0.02 inside radius_m)
+        # Vectorized Haversine check for all active roadblocks -> 0.0001 closure multiplier
         if roadblocks:
+            lat_rad = np.radians(self.edge_mid_lats)
+            lon_rad = np.radians(self.edge_mid_lons)
             for rb in roadblocks:
-                for idx in range(self.num_edges):
-                    dist = haversine_distance_m(
-                        rb.lat,
-                        rb.lon,
-                        float(self.edge_mid_lats[idx]),
-                        float(self.edge_mid_lons[idx]),
-                    )
-                    if dist <= rb.radius_m:
-                        multipliers[idx] = 0.02
+                rb_lat_r = math.radians(rb.lat)
+                rb_lon_r = math.radians(rb.lon)
+                dlat = lat_rad - rb_lat_r
+                dlon = lon_rad - rb_lon_r
+                a = (
+                    np.sin(dlat / 2.0) ** 2
+                    + math.cos(rb_lat_r) * np.cos(lat_rad) * np.sin(dlon / 2.0) ** 2
+                )
+                dists_m = 2.0 * 6371000.0 * np.arctan2(np.sqrt(a), np.sqrt(np.maximum(0.0, 1.0 - a)))
+                multipliers[dists_m <= rb.radius_m] = 0.0001
 
         return multipliers
-
-
-if __name__ == "__main__":
-    # Quick standalone verification of TrafficModel
-    sample_tm = TrafficModel(
-        edge_u=[0, 1, 2],
-        edge_v=[1, 2, 3],
-        edge_road_classes=["motorway", "primary", "tertiary"],
-        edge_mid_lats=[53.4626, 53.4808, 53.5191],
-        edge_mid_lons=[-2.2261, -2.2426, -2.2272],
-        seed=42,
-    )
-    m_evening = sample_tm.compute_multipliers("off_peak", hour_of_day=20.37)  # 8:22 PM
-    m_morning = sample_tm.compute_multipliers("rush_hour", hour_of_day=8.50)  # 8:30 AM
-    m_blocked = sample_tm.compute_multipliers(
-        "normal",
-        hour_of_day=10.0,
-        roadblocks=[Roadblock(id="rb_1", lat=53.4808, lon=-2.2426, radius_m=500.0)],
-    )
-    print("TrafficModel self-test:")
-    print(f"  8:22 PM Off-Peak multipliers : {np.round(m_evening, 3)}")
-    print(f"  8:30 AM Rush-Hour multipliers: {np.round(m_morning, 3)}")
-    print(f"  10:00 AM + Roadblock on Edge1: {np.round(m_blocked, 3)}")
