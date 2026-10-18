@@ -1,6 +1,7 @@
 /**
  * ============================================================================
- * TRIAGE — Uber-Like 2D Leaflet Map, WebSocket Client & 60FPS Gliding Engine
+ * TRIAGE — Uber-Like 2D Leaflet Map + Interactive Spotlight Judge Tour
+ *          + Chronological Animated 44,000 Impact Calculator
  * Full complete file — Select All (Ctrl+A) and Paste (Ctrl+V) into:
  * frontend/js/app.js
  * ============================================================================
@@ -17,13 +18,14 @@ const state = {
   seed: 42,
   roadblockMode: false,
   activeTab: "ambulances",
-  selectedEntity: null, // { type: 'ambulance' | 'hospital', id: string }
+  selectedEntity: null,
   lastTickState: null,
   wasRunning: false,
   impactShownForRun: false,
+  tourActive: false,
+  tourStepIndex: 0,
 };
 
-// Initialize Leaflet Map centered on Greater Manchester
 const map = L.map("map", {
   center: MANCHESTER_CENTER,
   zoom: 12,
@@ -33,12 +35,11 @@ const map = L.map("map", {
 
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
-// Official OpenStreetMap tile server: 100% free, ZERO watermarks, shows real Manchester street blocks & roads
+// Official OpenStreetMap tile server with custom Uber-Night dark filter in style.css
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
 }).addTo(map);
 
-// Distinct neon colors per hospital so routes look like Uber navigation lines
 const HOSPITAL_COLORS = {
   mri: "#00e5ff",
   salford: "#00f59b",
@@ -50,15 +51,11 @@ const HOSPITAL_COLORS = {
   trafford: "#4ade80",
 };
 
-// Map marker & polyline registries
 const hospitalMarkers = new Map();
 const ambulanceMarkers = new Map();
 const ambulancePolylines = new Map();
 const ambulanceGlowLines = new Map();
 const roadblockCircles = new Map();
-
-// Smooth 60FPS interpolation state per ambulance:
-// ambId -> { fromLat, fromLon, toLat, toLon, startMs, durationMs, heading, data }
 const ambInterpolation = new Map();
 
 function formatSecondsToMMSS(totalSeconds) {
@@ -66,6 +63,28 @@ function formatSecondsToMMSS(totalSeconds) {
   const mins = Math.floor(s / 60);
   const secs = s % 60;
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+/**
+ * Smoothly counts a number up from 0 to targetValue over durationMs
+ * so judges watch the metrics climb chronologically!
+ */
+function animateNumberValue(elementId, startVal, endVal, durationMs, formatFn) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const startTime = performance.now();
+
+  function step(now) {
+    const progress = Math.min(1, (now - startTime) / durationMs);
+    // Ease-out cubic curve
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = startVal + (endVal - startVal) * eased;
+    el.textContent = formatFn ? formatFn(current) : Math.round(current).toLocaleString();
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+  requestAnimationFrame(step);
 }
 
 function getHospitalStressClass(stress) {
@@ -126,7 +145,6 @@ function createAmbulanceHTML(amb, isDiverted = false) {
 function updateMapEntities(tickData) {
   const nowMs = performance.now();
 
-  // Check if any ambulance was diverted on this tick
   const divertedSet = new Set();
   if (Array.isArray(tickData.events)) {
     tickData.events.forEach((ev) => {
@@ -207,7 +225,6 @@ function updateMapEntities(tickData) {
       );
     }
 
-    // Update or create Uber-style dual-layer route polyline (outer glow + crisp solid street line)
     const routeColor = HOSPITAL_COLORS[amb.hospital_id] || "#00e5ff";
     if (Array.isArray(amb.route) && amb.route.length >= 2) {
       if (!ambulancePolylines.has(amb.id)) {
@@ -251,7 +268,6 @@ function updateMapEntities(tickData) {
     }
   });
 
-  // Remove stale markers when switching from 10 ambulances to 5
   for (const [id, marker] of ambulanceMarkers.entries()) {
     if (!activeAmbIds.has(id)) {
       map.removeLayer(marker);
@@ -278,7 +294,7 @@ function updateMapEntities(tickData) {
     rbIds.add(rb.id);
     if (!roadblockCircles.has(rb.id)) {
       const circle = L.circle([rb.lat, rb.lon], {
-        radius: rb.radius_m || 550,
+        radius: rb.radius_m || 650,
         color: "#ff3b5c",
         fillColor: "#ff3b5c",
         fillOpacity: 0.32,
@@ -458,43 +474,229 @@ window.adjustHospitalOccupied = async function (hospId, newOccupied) {
   });
 };
 
+let impactTimeouts = [];
+
 async function fetchAndShowImpactModal() {
   try {
+    // Clear any previous reveal timers
+    impactTimeouts.forEach((t) => clearTimeout(t));
+    impactTimeouts = [];
+
+    // Hide all 6 stages initially so they reveal one after another
+    for (let i = 1; i <= 6; i++) {
+      const st = document.getElementById(`impact-stage-${i}`);
+      if (st) st.classList.remove("stage-visible");
+    }
+    document.getElementById("bar-nearest").style.width = "0%";
+    document.getElementById("bar-triage").style.width = "0%";
+
     const res = await fetch("/api/impact");
     const data = await res.json();
     const tc = data.triage_comparison || {};
 
-    document.getElementById("impact-prevented-num").textContent = Number(
-      tc.triage_prevented ?? data.severe_cases_prevented ?? 32267
-    ).toLocaleString();
+    const nearestWait = Number(tc.nearest_handover_min ?? 24.5);
+    const nearestCases = Number(tc.nearest_projected_cases ?? 35933);
+    const nearestOverflows = Number(tc.nearest_details?.corridor_overflows ?? 3);
 
-    document.getElementById("impact-reduction-pct").textContent = `${
-      tc.triage_reduction_pct ?? data.reduction_percent ?? 73.3
-    }% Reduction in Potential Severe Harm vs. 30-Min Baseline`;
+    const triageWait = Number(tc.triage_handover_min ?? data.triage_avg_handover_min ?? 8.2);
+    const triageCases = Number(tc.triage_projected_cases ?? data.projected_annual_severe_cases ?? 11733);
+    const triageOverflows = Number(tc.triage_details?.corridor_overflows ?? 0);
 
-    document.getElementById("comp-nearest-wait").textContent = `${
-      tc.nearest_handover_min ?? 24.5
-    } min`;
-    document.getElementById("comp-nearest-cases").textContent = `${Number(
-      tc.nearest_projected_cases ?? 35933
-    ).toLocaleString()} / yr`;
-    document.getElementById("comp-nearest-overflows").textContent = `${
-      tc.nearest_details?.corridor_overflows ?? 3
-    } patients`;
-
-    document.getElementById("comp-triage-wait").textContent = `${
-      tc.triage_handover_min ?? data.triage_avg_handover_min ?? 8.2
-    } min`;
-    document.getElementById("comp-triage-cases").textContent = `${Number(
-      tc.triage_projected_cases ?? data.projected_annual_severe_cases ?? 11733
-    ).toLocaleString()} / yr`;
-    document.getElementById("comp-triage-overflows").textContent = `${
-      tc.triage_details?.corridor_overflows ?? 0
-    } patients`;
+    const preventedCases = Number(tc.triage_prevented ?? data.severe_cases_prevented ?? 32267);
+    const reductionPct = Number(tc.triage_reduction_pct ?? data.reduction_percent ?? 73.3);
 
     document.getElementById("impact-modal").classList.remove("hidden");
+
+    // Stage 1 (t = 100ms): Reveal Title & AACE 44,000 Context
+    impactTimeouts.push(
+      setTimeout(() => {
+        document.getElementById("impact-stage-1").classList.add("stage-visible");
+      }, 100)
+    );
+
+    // Stage 2 (t = 700ms): Reveal Step 01 UK National Baseline (30.0 min -> 44,000 cases)
+    impactTimeouts.push(
+      setTimeout(() => {
+        document.getElementById("impact-stage-2").classList.add("stage-visible");
+      }, 700)
+    );
+
+    // Stage 3 (t = 1550ms): Reveal Step 02 Naive Nearest Hospital Stampede + count up numbers
+    impactTimeouts.push(
+      setTimeout(() => {
+        document.getElementById("impact-stage-3").classList.add("stage-visible");
+        animateNumberValue("comp-nearest-wait", 0, nearestWait, 900, (v) => `${v.toFixed(1)} min`);
+        animateNumberValue("comp-nearest-cases", 0, nearestCases, 900, (v) => `${Math.round(v).toLocaleString()} / yr`);
+        document.getElementById("comp-nearest-overflows").textContent = `${nearestOverflows} patients`;
+        document.getElementById("bar-nearest").style.width = `${Math.min(100, Math.round((nearestCases / 44000) * 100))}%`;
+      }, 1550)
+    );
+
+    // Stage 4 (t = 2550ms): Reveal Step 03 TRIAGE AI Joint Routing + count up numbers
+    impactTimeouts.push(
+      setTimeout(() => {
+        document.getElementById("impact-stage-4").classList.add("stage-visible");
+        animateNumberValue("comp-triage-wait", 0, triageWait, 900, (v) => `${v.toFixed(1)} min`);
+        animateNumberValue("comp-triage-cases", 0, triageCases, 900, (v) => `${Math.round(v).toLocaleString()} / yr`);
+        document.getElementById("comp-triage-overflows").textContent = `${triageOverflows} patients`;
+        document.getElementById("bar-triage").style.width = `${Math.min(100, Math.round((triageCases / 44000) * 100))}%`;
+      }, 2550)
+    );
+
+    // Stage 5 (t = 3600ms): THE GRAND FINALE CLIMAX — Count up Severe Cases Prevented & % Lives/Harm Saved!
+    impactTimeouts.push(
+      setTimeout(() => {
+        document.getElementById("impact-stage-5").classList.add("stage-visible");
+        animateNumberValue("impact-prevented-num", 0, preventedCases, 1400, (v) =>
+          Math.round(v).toLocaleString()
+        );
+        animateNumberValue("impact-reduction-pct", 0, reductionPct, 1400, (v) =>
+          `🏆 ${v.toFixed(1)}% Reduction in Potential Severe Harm & Deaths vs. 30-Min Baseline`
+        );
+      }, 3600)
+    );
+
+    // Stage 6 (t = 4800ms): Reveal Replay Action Buttons
+    impactTimeouts.push(
+      setTimeout(() => {
+        document.getElementById("impact-stage-6").classList.add("stage-visible");
+      }, 4800)
+    );
   } catch (err) {
     console.error("Failed to load impact metrics:", err);
+  }
+}
+
+const TOUR_STEPS = [
+  {
+    targetId: "tour-section-spawner",
+    title: "1. Spawn a 999 Emergency Wave",
+    body: "In real life, there is never just 1 ambulance on the road. Click <strong>10 Ambulances (Surge)</strong> right now to spawn 10 simultaneous critical patients across Greater Manchester!",
+    prompt: "👆 Try clicking '10 Ambulances (Surge)' (or click Next Step)",
+    onEnter: () => {},
+  },
+  {
+    targetId: "tour-section-policy",
+    title: "2. The 'Hospital Stampede' vs. TRIAGE AI",
+    body: "Click <strong>📍 NEAREST</strong> and watch the map: naive routing sends nearby ambulances to the exact same closest hospital, overloading its queue! Then click <strong>🧠 TRIAGE AI</strong> to watch our Hungarian Algorithm spread them across 8 NHS hospitals.",
+    prompt: "👆 Toggle between NEAREST and TRIAGE AI to see routes switch live!",
+    onEnter: () => {},
+  },
+  {
+    targetId: "tour-section-traffic",
+    title: "3. Dynamic Time-of-Day & Rush Hour Traffic",
+    body: "An emergency at <strong>8:22 PM Quiet</strong> faces very different road speeds than <strong>8:30 AM Rush Hour</strong>. Clicking these chips recalculates all 7,148 Manchester street segments via Backwards Dijkstra in under 15ms.",
+    prompt: "👆 Click '10:00 AM Busy' or '8:30 AM Rush' to test live traffic!",
+    onEnter: () => {},
+  },
+  {
+    targetId: "tour-section-fleet",
+    title: "4. Predictive AI Vitals & DeepSeek Notes",
+    body: "Every ambulance carries a patient scored by our <strong>Scikit-Learn HistGradientBoosting AI</strong> on IBM LinuxONE. We just opened <strong>AMB-01</strong> on the right so you can see its live vitals and <strong>40-word DeepSeek Reception Pre-Alert</strong>!",
+    prompt: "👀 Check out the Inspector Drawer on the right (or click any ambulance card)!",
+    onEnter: () => {
+      openInspector("ambulance", "AMB-01");
+    },
+  },
+  {
+    targetId: "tour-section-roadblock",
+    title: "5. Drop a Live Roadblock on a Street Route",
+    body: "What if a crash blocks a major Manchester road while ambulances are en route? Let's test our real-time street detour engine!",
+    prompt: "👆 Click '🚧 Drop Live Roadblock on Map' — or click Next Step and we'll drop one for you!",
+    onEnter: () => {},
+  },
+  {
+    targetId: "tour-section-simulate",
+    title: "6. Simulate Live 60FPS Ambulance Routing",
+    body: "When you press <strong>SIMULATE LIVE ROUTING</strong>, ambulances glide smoothly along real Manchester streets. Every 15 simulated seconds, TRIAGE checks if any hospital is filling up and diverts trailing ambulances mid-journey!",
+    prompt: "👆 Click '▶ SIMULATE LIVE ROUTING' to start the fleet!",
+    onEnter: () => {},
+  },
+  {
+    targetId: "btn-open-impact",
+    title: "7. The 44,000 Annual Severe Harm Calculator",
+    body: "At the end of every run (or anytime you click this button), TRIAGE reveals a chronological breakdown of how many of the <strong>44,000 annual severe harm cases</strong> our algorithm prevented.",
+    prompt: "🎉 Click 'Finish & Open Impact Report' or start exploring freely!",
+    onEnter: () => {},
+  },
+];
+
+function startOnboardingTour() {
+  state.tourActive = true;
+  state.tourStepIndex = 0;
+  document.getElementById("onboarding-overlay").classList.remove("hidden");
+  renderTourStep();
+}
+
+function stopOnboardingTour() {
+  state.tourActive = false;
+  document.getElementById("onboarding-overlay").classList.add("hidden");
+  document
+    .querySelectorAll(".tour-active-target")
+    .forEach((el) => el.classList.remove("tour-active-target"));
+}
+
+function renderTourStep() {
+  if (!state.tourActive) return;
+  const step = TOUR_STEPS[state.tourStepIndex];
+  if (!step) {
+    stopOnboardingTour();
+    return;
+  }
+
+  // Remove previous highlight
+  document
+    .querySelectorAll(".tour-active-target")
+    .forEach((el) => el.classList.remove("tour-active-target"));
+
+  const targetEl = document.getElementById(step.targetId);
+  const holeEl = document.getElementById("spotlight-hole");
+  const tooltipEl = document.getElementById("tour-tooltip");
+
+  if (targetEl) {
+    targetEl.classList.add("tour-active-target");
+    const rect = targetEl.getBoundingClientRect();
+    const pad = 8;
+    holeEl.style.top = `${Math.max(6, rect.top - pad)}px`;
+    holeEl.style.left = `${Math.max(6, rect.left - pad)}px`;
+    holeEl.style.width = `${rect.width + pad * 2}px`;
+    holeEl.style.height = `${rect.height + pad * 2}px`;
+
+    // Position the floating story card right next to the highlighted element
+    let tooltipLeft = rect.right + 24;
+    let tooltipTop = Math.max(88, Math.min(window.innerHeight - 310, rect.top - 10));
+
+    if (tooltipLeft + 400 > window.innerWidth) {
+      tooltipLeft = Math.max(20, rect.left - 410);
+      tooltipTop = Math.max(88, rect.bottom + 18);
+    }
+
+    tooltipEl.style.left = `${tooltipLeft}px`;
+    tooltipEl.style.top = `${tooltipTop}px`;
+  }
+
+  document.getElementById("tour-step-badge").textContent = `STEP ${
+    state.tourStepIndex + 1
+  } OF ${TOUR_STEPS.length}`;
+  document.getElementById("tour-title").textContent = step.title;
+  document.getElementById("tour-body").innerHTML = step.body;
+  document.getElementById("tour-action-prompt").innerHTML = step.prompt;
+
+  // Render progress dots
+  const dotsContainer = document.getElementById("tour-dots");
+  dotsContainer.innerHTML = TOUR_STEPS.map(
+    (_, idx) => `<div class="tour-dot ${idx === state.tourStepIndex ? "active" : ""}"></div>`
+  ).join("");
+
+  const prevBtn = document.getElementById("btn-tour-prev");
+  prevBtn.style.visibility = state.tourStepIndex === 0 ? "hidden" : "visible";
+
+  const nextBtn = document.getElementById("btn-tour-next");
+  nextBtn.textContent =
+    state.tourStepIndex === TOUR_STEPS.length - 1 ? "Finish Tour ✓" : "Next Step →";
+
+  if (typeof step.onEnter === "function") {
+    step.onEnter();
   }
 }
 
@@ -509,7 +711,6 @@ function connectWebSocket() {
     updateMapEntities(tickData);
     updateHUDAndSidebar(tickData);
 
-    // Automatically pop up the Impact Calculator when a running simulation finishes
     if (state.wasRunning && !tickData.running && !state.impactShownForRun) {
       state.impactShownForRun = true;
       fetchAndShowImpactModal();
@@ -544,6 +745,9 @@ async function triggerSpawnPreview() {
 }
 
 async function triggerStartSimulation() {
+  if (state.tourActive) {
+    stopOnboardingTour();
+  }
   state.impactShownForRun = false;
   const res = await fetch("/api/start", {
     method: "POST",
@@ -565,9 +769,40 @@ async function triggerStartSimulation() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Landing page launch button
-  document.getElementById("btn-launch-app").addEventListener("click", () => {
+  // Landing page buttons: Launch with Interactive Judge Tour OR Skip directly to Sandbox
+  document.getElementById("btn-launch-tour").addEventListener("click", () => {
     document.getElementById("landing-overlay").classList.add("fade-out");
+    setTimeout(() => startOnboardingTour(), 450);
+  });
+
+  document.getElementById("btn-launch-direct").addEventListener("click", () => {
+    document.getElementById("landing-overlay").classList.add("fade-out");
+  });
+
+  // Top bar Guided Tour replay button
+  document.getElementById("btn-start-tour").addEventListener("click", () => {
+    startOnboardingTour();
+  });
+
+  // Tour Navigation buttons
+  document.getElementById("btn-tour-skip").addEventListener("click", stopOnboardingTour);
+  document.getElementById("btn-tour-prev").addEventListener("click", () => {
+    if (state.tourStepIndex > 0) {
+      state.tourStepIndex--;
+      renderTourStep();
+    }
+  });
+  document.getElementById("btn-tour-next").addEventListener("click", () => {
+    if (state.tourStepIndex < TOUR_STEPS.length - 1) {
+      state.tourStepIndex++;
+      renderTourStep();
+    } else {
+      stopOnboardingTour();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (state.tourActive) renderTourStep();
   });
 
   // Spawn 5 vs Spawn 10 buttons
@@ -579,6 +814,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.classList.add("active-spawn");
       state.ambulanceCount = Number(btn.dataset.count);
       triggerSpawnPreview();
+      if (state.tourActive && state.tourStepIndex === 0) {
+        setTimeout(() => {
+          state.tourStepIndex = 1;
+          renderTourStep();
+        }, 600);
+      }
     });
   });
 
@@ -631,6 +872,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     rbBtn.textContent = state.roadblockMode
       ? "🎯 Click Anywhere on Map to Drop Roadblock"
       : "🚧 Drop Live Roadblock on Map";
+
+    // If in tour step 5, hide the spotlight overlay temporarily so they can click the map freely!
+    if (state.tourActive && state.roadblockMode) {
+      document.getElementById("spotlight-hole").style.opacity = "0";
+      document.getElementById("tour-action-prompt").innerHTML =
+        "🎯 Now click directly on any glowing route line on the Manchester map!";
+    }
   });
 
   document
@@ -659,6 +907,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const snap = await res.json();
     updateMapEntities(snap);
     updateHUDAndSidebar(snap);
+
+    if (state.tourActive) {
+      document.getElementById("spotlight-hole").style.opacity = "1";
+      state.tourStepIndex = 5; // Advance to Step 6 (Simulate Live Routing)
+      renderTourStep();
+    }
   });
 
   // Simulate Button
@@ -667,38 +921,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     .addEventListener("click", triggerStartSimulation);
 
   // Impact Calculator buttons
-  document
-    .getElementById("btn-open-impact")
-    .addEventListener("click", fetchAndShowImpactModal);
+  document.getElementById("btn-open-impact").addEventListener("click", () => {
+    if (state.tourActive) stopOnboardingTour();
+    fetchAndShowImpactModal();
+  });
   document.getElementById("btn-close-impact").addEventListener("click", () => {
     document.getElementById("impact-modal").classList.add("hidden");
   });
-  document
-    .getElementById("btn-replay-triage")
-    .addEventListener("click", () => {
-      document.getElementById("impact-modal").classList.add("hidden");
-      state.policy = "TRIAGE";
-      document.getElementById("btn-policy-triage").classList.add("active");
-      document.getElementById("btn-policy-nearest").classList.remove("active");
-      triggerStartSimulation();
-    });
-  document
-    .getElementById("btn-replay-nearest")
-    .addEventListener("click", () => {
-      document.getElementById("impact-modal").classList.add("hidden");
-      state.policy = "NEAREST";
-      document.getElementById("btn-policy-nearest").classList.add("active");
-      document.getElementById("btn-policy-triage").classList.remove("active");
-      triggerStartSimulation();
-    });
+  document.getElementById("btn-replay-triage").addEventListener("click", () => {
+    document.getElementById("impact-modal").classList.add("hidden");
+    state.policy = "TRIAGE";
+    document.getElementById("btn-policy-triage").classList.add("active");
+    document.getElementById("btn-policy-nearest").classList.remove("active");
+    triggerStartSimulation();
+  });
+  document.getElementById("btn-replay-nearest").addEventListener("click", () => {
+    document.getElementById("impact-modal").classList.add("hidden");
+    state.policy = "NEAREST";
+    document.getElementById("btn-policy-nearest").classList.add("active");
+    document.getElementById("btn-policy-triage").classList.remove("active");
+    triggerStartSimulation();
+  });
 
   // Inspector close
-  document
-    .getElementById("btn-close-inspector")
-    .addEventListener("click", () => {
-      document.getElementById("inspector-drawer").classList.add("hidden");
-      state.selectedEntity = null;
-    });
+  document.getElementById("btn-close-inspector").addEventListener("click", () => {
+    document.getElementById("inspector-drawer").classList.add("hidden");
+    state.selectedEntity = null;
+  });
 
   // Sidebar Tabs
   const tabs = [
@@ -711,7 +960,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       document
         .querySelectorAll(".tab-btn")
         .forEach((b) => b.classList.remove("active"));
-      document.getElementById(btnId).addEventListener("active");
+      document.getElementById(btnId).classList.add("active");
       state.activeTab = tabName;
       if (state.lastTickState) renderSidebarList(state.lastTickState);
     });
@@ -726,7 +975,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     ).textContent = `IBM LinuxONE (${hData.architecture}) · Model R²=${hData.ml_model_r2} · ${hData.graph_nodes} Street Nodes`;
   } catch (e) {}
 
-  // Load initial paused map state & open WebSocket stream
   await triggerSpawnPreview();
   connectWebSocket();
 });

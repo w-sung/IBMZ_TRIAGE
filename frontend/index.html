@@ -5,15 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TRIAGE — Real-Time AI Ambulance Guidance Engine | IBM Z Datathon 2026</title>
 
-  <!-- Google Fonts: Inter & JetBrains Mono for crisp telemetry numbers -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap"
     rel="stylesheet"
   />
 
-  <!-- Leaflet 1.9.4 CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -21,57 +19,69 @@
     crossorigin=""
   />
 
-  <!-- Custom TRIAGE Dark Glassmorphism Stylesheet -->
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div id="landing-overlay" class="landing-overlay">
     <div class="landing-card">
-      <div class="landing-badge-row">
+      <div class="landing-badge-row hero-seq hero-seq-1">
         <span class="ibm-badge">IBM Z / LinuxONE (s390x)</span>
         <span class="theme-badge">Real-Time AI for Critical Decisions</span>
       </div>
-      <h1 class="landing-title">TRIAGE</h1>
-      <p class="landing-subtitle">
+
+      <h1 class="landing-title hero-seq hero-seq-2">TRIAGE</h1>
+      <p class="landing-subtitle hero-seq hero-seq-3">
         Time-critical Routing &amp; Intelligent Ambulance Guidance Engine
       </p>
-      <p class="landing-description">
-        In England, <strong>44,000 patients suffer severe harm annually</strong> from 30+ minute ambulance handover delays.
-        Standard routing sends nearby ambulances to the <em>same</em> closest hospital—creating lethal queues.
-        <strong>TRIAGE</strong> combines Predictive AI vitals deterioration, Hungarian joint-optimization, and DeepSeek
-        reception pre-alerts to eliminate hospital stampedes in real time.
-      </p>
 
-      <div class="landing-pillars">
+      <!-- Each narrative line animates in one after another so judges can read effortlessly -->
+      <div class="landing-story-lines">
+        <p class="story-line hero-seq hero-seq-4">
+          🚨 In England, <strong>44,000 patients suffer severe harm every year</strong> due to 30+ minute ambulance handover delays.
+        </p>
+        <p class="story-line hero-seq hero-seq-5">
+          🏥 Standard navigation routes nearby 999 calls to the <em>same</em> closest hospital—creating a lethal <strong>"Hospital Stampede"</strong>.
+        </p>
+        <p class="story-line hero-seq hero-seq-6">
+          🧠 <strong>TRIAGE</strong> combines Predictive AI deterioration scoring, Hungarian joint-optimization, and DeepSeek pre-alerts to eliminate bottlenecks in real time.
+        </p>
+      </div>
+
+      <div class="landing-pillars hero-seq hero-seq-7">
         <div class="pillar-box">
-          <span class="pillar-role">1. PREDICT</span>
+          <span class="pillar-role">1. PREDICT (LINUXONE ML)</span>
           <strong>HistGradientBoosting AI</strong>
-          <span>Scores NEWS2 vitals severity S₀ &amp; live deterioration rate (+pts/min) on LinuxONE</span>
+          <span>Scores NEWS2 vitals severity S₀ &amp; live deterioration rate (+pts/min)</span>
         </div>
         <div class="pillar-box">
-          <span class="pillar-role">2. DECIDE</span>
+          <span class="pillar-role">2. DECIDE (JOINT ROUTING)</span>
           <strong>Hungarian Anti-Stampede</strong>
-          <span>Jointly optimizes 5–10 parallel ambulances across 8 Greater Manchester NHS hospitals</span>
+          <span>Jointly optimizes 5–10 parallel ambulances across 8 Manchester NHS hospitals</span>
         </div>
         <div class="pillar-box">
-          <span class="pillar-role">3. COMMUNICATE</span>
+          <span class="pillar-role">3. COMMUNICATE (GEN AI)</span>
           <strong>DeepSeek Pre-Alert</strong>
           <span>Streams 40-word reception prep notes ahead of arrival with zero hallucinated numbers</span>
         </div>
       </div>
 
-      <button id="btn-launch-app" class="btn-launch">
-        <span>Launch Live Manchester Simulation</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
-      </button>
+      <div class="landing-cta-group hero-seq hero-seq-8">
+        <button id="btn-launch-tour" class="btn-launch">
+          <span>🎯 Launch with Interactive Judge Tour</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+        <button id="btn-launch-direct" class="btn-launch-secondary">
+          Skip Tour &amp; Enter Sandbox Directly
+        </button>
+      </div>
     </div>
   </div>
 
   <div id="map"></div>
 
-  <header class="top-hud-bar">
+  <header class="top-hud-bar" id="top-hud-bar">
     <div class="brand-cluster">
       <div class="pulse-dot"></div>
       <div>
@@ -80,7 +90,7 @@
       </div>
     </div>
 
-    <div class="telemetry-pills">
+    <div class="telemetry-pills" id="hud-telemetry-pills">
       <div class="telemetry-pill">
         <span class="t-label">SIM CLOCK</span>
         <span class="t-value mono" id="hud-sim-clock">00:00</span>
@@ -100,14 +110,17 @@
     </div>
 
     <div class="top-actions">
+      <button id="btn-start-tour" class="btn-tour-trigger" title="Replay Interactive Guided Tour">
+        🎯 Guided Tour
+      </button>
       <button id="btn-open-impact" class="btn-impact-Quick">
         <span>⚡ 44,000 Impact Calculator</span>
       </button>
     </div>
   </header>
 
-  <aside class="control-sidebar">
-    <div class="sidebar-section">
+  <aside class="control-sidebar" id="control-sidebar">
+    <div class="sidebar-section" id="tour-section-spawner">
       <div class="section-header">
         <span class="section-step">01</span>
         <h2>FLEET WAVE SPAWNER</h2>
@@ -125,7 +138,7 @@
       </div>
     </div>
 
-    <div class="sidebar-section">
+    <div class="sidebar-section" id="tour-section-policy">
       <div class="section-header">
         <span class="section-step">02</span>
         <h2>ROUTING POLICY BRAIN</h2>
@@ -142,7 +155,7 @@
       </div>
     </div>
 
-    <div class="sidebar-section">
+    <div class="sidebar-section" id="tour-section-traffic">
       <div class="section-header">
         <span class="section-step">03</span>
         <h2>TIME OF DAY &amp; TRAFFIC</h2>
@@ -162,7 +175,7 @@
         </div>
       </div>
 
-      <div class="roadblock-row">
+      <div class="roadblock-row" id="tour-section-roadblock">
         <button id="btn-roadblock-mode" class="btn-roadblock">
           🚧 Drop Live Roadblock on Map
         </button>
@@ -170,7 +183,7 @@
       </div>
     </div>
 
-    <div class="sidebar-section simulate-cta-section">
+    <div class="sidebar-section simulate-cta-section" id="tour-section-simulate">
       <button id="btn-simulate" class="btn-simulate">
         <span class="sim-icon">▶</span>
         <span id="btn-simulate-text">SIMULATE LIVE ROUTING</span>
@@ -178,15 +191,13 @@
     </div>
 
     <!-- Live Fleet & Hospital Telemetry Tabs -->
-    <div class="sidebar-section fleet-list-section">
+    <div class="sidebar-section fleet-list-section" id="tour-section-fleet">
       <div class="tabs-header">
         <button class="tab-btn active" id="tab-btn-ambulances">🚑 Active Fleet</button>
         <button class="tab-btn" id="tab-btn-hospitals">🏥 8 NHS Hospitals</button>
         <button class="tab-btn" id="tab-btn-events">📡 AI Log</button>
       </div>
-      <div id="sidebar-list-container" class="sidebar-list-container">
-        <!-- Populated dynamically by app.js -->
-      </div>
+      <div id="sidebar-list-container" class="sidebar-list-container"></div>
     </div>
   </aside>
 
@@ -202,68 +213,91 @@
     <div class="impact-modal-card">
       <button id="btn-close-impact" class="impact-close-btn">✕</button>
 
-      <div class="impact-top-tag">IBM Z DATATHON 2026 · CLINICAL &amp; LOGISTICAL IMPACT REPORT</div>
-      <h2 class="impact-headline">Projected Annual Severe Harm Reduction</h2>
-      <p class="impact-subheadline">
-        Anchored to the Association of Ambulance Chief Executives (AACE 2025) national baseline of
-        <strong>44,000 annual severe patient harm cases</strong> caused by 30-minute handover delays.
-      </p>
-
-      <div class="impact-hero-banner">
-        <div class="hero-metric-box">
-          <span class="hero-metric-label">POTENTIAL SEVERE COMPLICATIONS PREVENTED / YEAR</span>
-          <div class="hero-neon-number" id="impact-prevented-num">32,267</div>
-          <div class="hero-reduction-pill" id="impact-reduction-pct">73.3% Reduction vs. 30-Min National Baseline</div>
-        </div>
+      <!-- Stage 1: Header Context -->
+      <div class="impact-stage" id="impact-stage-1">
+        <div class="impact-top-tag">IBM Z DATATHON 2026 · CLINICAL &amp; LOGISTICAL IMPACT REPORT</div>
+        <h2 class="impact-headline">Chronological Impact Analysis</h2>
+        <p class="impact-subheadline">
+          Anchored to the Association of Ambulance Chief Executives (AACE) national baseline of
+          <strong>44,000 annual severe patient harm cases</strong> caused by 30-minute handover delays.
+        </p>
       </div>
 
+      <!-- Stage 2, 3, 4: Chronological Cards (Baseline -> Naive Nearest -> TRIAGE AI) -->
       <div class="impact-comparison-grid">
-        <div class="comp-card comp-baseline">
-          <div class="comp-card-header">🇬🇧 UK National Baseline (No Optimization)</div>
+        <!-- Step 1 Card: UK Baseline -->
+        <div class="comp-card comp-baseline impact-stage" id="impact-stage-2">
+          <div class="comp-step-badge">STEP 01 · NATIONAL PROBLEM</div>
+          <div class="comp-card-header">🇬🇧 UK 30-Min Delay Baseline</div>
           <div class="comp-stat-row">
             <span>Avg Handover Delay:</span>
             <strong class="mono">30.0 min</strong>
           </div>
           <div class="comp-stat-row">
-            <span>Annual Severe Harm Cases:</span>
+            <span>Annual Severe Harm:</span>
             <strong class="mono danger-text">44,000 / yr</strong>
+          </div>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill bar-danger" id="bar-baseline" style="width: 100%"></div>
           </div>
         </div>
 
-        <div class="comp-card comp-nearest">
-          <div class="comp-card-header">📍 Naive "Nearest Hospital" (Stampede)</div>
+        <!-- Step 2 Card: Naive Nearest -->
+        <div class="comp-card comp-nearest impact-stage" id="impact-stage-3">
+          <div class="comp-step-badge">STEP 02 · WITHOUT JOINT AI</div>
+          <div class="comp-card-header">📍 Naive "Nearest ED" (Stampede)</div>
           <div class="comp-stat-row">
             <span>Effective Handover Wait:</span>
-            <strong class="mono" id="comp-nearest-wait">24.5 min</strong>
+            <strong class="mono warn-text" id="comp-nearest-wait">0.0 min</strong>
           </div>
           <div class="comp-stat-row">
             <span>Projected Severe Cases:</span>
-            <strong class="mono warn-text" id="comp-nearest-cases">35,933 / yr</strong>
+            <strong class="mono warn-text" id="comp-nearest-cases">0 / yr</strong>
           </div>
           <div class="comp-stat-row">
             <span>Corridor Care Overflows:</span>
-            <strong class="mono warn-text" id="comp-nearest-overflows">3 patients</strong>
+            <strong class="mono warn-text" id="comp-nearest-overflows">0 patients</strong>
+          </div>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill bar-warn" id="bar-nearest" style="width: 0%"></div>
           </div>
         </div>
 
-        <div class="comp-card comp-triage">
-          <div class="comp-card-header">🧠 TRIAGE AI (Hungarian Joint Routing)</div>
+        <!-- Step 3 Card: TRIAGE AI -->
+        <div class="comp-card comp-triage impact-stage" id="impact-stage-4">
+          <div class="comp-step-badge">STEP 03 · WITH TRIAGE AI</div>
+          <div class="comp-card-header">🧠 TRIAGE AI (Hungarian Joint)</div>
           <div class="comp-stat-row">
             <span>Effective Handover Wait:</span>
-            <strong class="mono neon-text" id="comp-triage-wait">8.2 min</strong>
+            <strong class="mono neon-text" id="comp-triage-wait">0.0 min</strong>
           </div>
           <div class="comp-stat-row">
             <span>Projected Severe Cases:</span>
-            <strong class="mono neon-text" id="comp-triage-cases">12,027 / yr</strong>
+            <strong class="mono neon-text" id="comp-triage-cases">0 / yr</strong>
           </div>
           <div class="comp-stat-row">
             <span>Corridor Care Overflows:</span>
             <strong class="mono neon-text" id="comp-triage-overflows">0 patients</strong>
           </div>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill bar-neon" id="bar-triage" style="width: 0%"></div>
+          </div>
         </div>
       </div>
 
-      <div class="impact-actions-footer">
+      <!-- Stage 5: The Grand Finale Climax (Revealed Last!) -->
+      <div class="impact-hero-banner impact-stage" id="impact-stage-5">
+        <div class="hero-metric-box">
+          <span class="hero-metric-label">FINAL VERDICT · POTENTIAL SEVERE COMPLICATIONS PREVENTED ANNUALLY</span>
+          <div class="hero-neon-number" id="impact-prevented-num">0</div>
+          <div class="hero-reduction-pill" id="impact-reduction-pct">
+            0.0% Reduction in Potential Severe Harm &amp; Deaths vs. 30-Min Baseline
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 6: Action Buttons -->
+      <div class="impact-actions-footer impact-stage" id="impact-stage-6">
         <button id="btn-replay-triage" class="btn-modal-primary">
           🔄 Run Again with TRIAGE AI
         </button>
@@ -274,23 +308,44 @@
     </div>
   </div>
 
-  <!-- Mandatory Footer Disclaimer per CONTEXT.md Section 8 -->
+  <div id="onboarding-overlay" class="onboarding-overlay hidden">
+    <!-- Spotlight cutout frame that smoothly moves & zooms around the active button/panel -->
+    <div id="spotlight-hole" class="spotlight-hole"></div>
+
+    <!-- Floating Story & Instruction Bubble -->
+    <div id="tour-tooltip" class="tour-tooltip">
+      <div class="tour-step-header">
+        <span class="tour-step-badge" id="tour-step-badge">STEP 1 OF 7</span>
+        <button id="btn-tour-skip" class="tour-skip-btn">Skip Tour ✕</button>
+      </div>
+      <h3 class="tour-title" id="tour-title">Welcome to TRIAGE Dispatch</h3>
+      <p class="tour-body" id="tour-body">
+        Let's walk through how our AI prevents hospital stampedes across Greater Manchester.
+      </p>
+      <div class="tour-action-prompt" id="tour-action-prompt">
+        👆 Click the highlighted control to see it in action!
+      </div>
+      <div class="tour-footer">
+        <button id="btn-tour-prev" class="btn-tour-nav">← Back</button>
+        <div class="tour-dots" id="tour-dots"></div>
+        <button id="btn-tour-next" class="btn-tour-nav btn-tour-primary">Next Step →</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">
     <span>Simulation with synthetic data. Not medical software.</span>
     <span class="footer-sep">·</span>
-    <span>Map data © OpenStreetMap contributors, © CARTO</span>
+    <span>Map data © OpenStreetMap contributors</span>
     <span class="footer-sep">·</span>
     <span>Powered by IBM LinuxONE (s390x) + Scikit-Learn + Scipy + DeepSeek</span>
   </footer>
 
-  <!-- Leaflet 1.9.4 JS -->
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
-
-  <!-- Main TRIAGE Frontend Application Logic -->
   <script src="/js/app.js"></script>
 </body>
 </html>
