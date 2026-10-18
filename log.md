@@ -1,15 +1,27 @@
 # TRIAGE - Development Log & AI Handoff
 **Branches:** `arno-dev-branch` (chunk 1), `tom-dev-branch` (chunk 2)
-**Current Phase:** Chunk 2 done: code, tests, `main.py` wiring and the real Manchester graph. Chunk 3 next.
+**Current Phase:** Chunk 3 implementation prepared; integration against the latest repo branch pending.
 
 ## Status by chunk
 | Chunk | Status |
 |---|---|
 | 1. Foundation and synthetic data | Done |
 | 2. Manchester map, hospitals, routing, time-of-day traffic | **Done.** Real OSM graph built (10,204 nodes, 21,008 edges) and all 8 hospitals resolved. Still to do: check hospital pins on a map, re-measure the 100 ms routing budget on the real graph. |
-| 3 to 7 | Not started |
+| 3. Predictive AI deterioration model | Implementation prepared; isolated tests pass, repo integration pending |
+| 4 to 7 | Not started |
 
 ## Changelog (latest first)
+**2026-10-18, chunk 3 implementation prepared — integration pending**
+- Added `backend/app/health/scoring.py`: deterministic, NEWS2-inspired synthetic label function, bounded severity score, risk-feature builder, condition priors and diagnostic-only expected-S0 bands. This is not a full NEWS2 implementation or clinical validation.
+- Added `backend/app/health/patients.py`: tolerant JSON loading for list- or mapping-based `patients.json` / `conditions.json`, plus seeded, condition-stratified synthetic augmentation (default 5,000 rows).
+- Added `backend/app/health/model.py`: `HistGradientBoostingRegressor`, fixed seed, held-out MAE/R² diagnostics, bounded `SeverityPredictor.predict(patient)`, and in-memory `get_default_model()`. No `.pkl` / `.joblib` is produced or committed; model trains locally on the target platform.
+- Added `backend/app/health/deterioration.py`: deterministic condition base-rate lookup, shock-index/SpO2 and age multipliers, `deterioration_at()` cap at 100, and Category 1–4 mapping.
+- Added `backend/app/health/train.py`: `python -m backend.app.health.train` trains the model and prints training time, synthetic-label validation metrics, and condition-band diagnostics.
+- Added `backend/tests/test_health.py`: 11 health tests covering score bounds and monotonicity, condition-prior ordering, deterministic training data, model monotonicity/range, expected-band diagnostics on neutral test records, rate calculations and category thresholds.
+- Isolated patch verification: `python -m pytest backend/tests/test_health.py -q` → **11 passed**; Python compile check passed. A 5,000-row CLI smoke test on synthetic fixture JSON passed (validation metrics measure agreement with our synthetic label function only, not clinical performance).
+- **No Chunk 1 or Chunk 2 source files were changed** in this implementation. `main.py`, routing, traffic, graph/hospital data, `scripts/make_patients.py`, and dependency manifests remain untouched to avoid changing working contracts.
+- **Integration is still pending:** apply this patch on a fresh feature branch, run `python -m pytest backend/tests -q` against the actual repo, then run the training CLI against its real synthetic JSON files. Chunk 4 should wire `get_default_model().predict(patient)`, `calculate_deterioration_rate(patient, conditions)`, and `severity_category(score)` into its simulation without placing training/network calls inside each simulation tick.
+
 **2026-10-17, chunk 2 finished**
 - Ran `scripts/build_graph.py` for real: `data/graph/nodes.csv` and `edges.csv` now exist, and `data/hospitals.json` has `lat`, `lon`, `node_id` filled for all 8 hospitals.
 - First run crashed with `ImportError: scikit-learn must be installed ... to search an unprojected graph`. Fix: `pip install scikit-learn` (build step only).
